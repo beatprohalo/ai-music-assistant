@@ -1,0 +1,48 @@
+{
+  "name": "ai-music-assistant-simple",
+  "version": "1.0.0",
+  "description": "Simple AI Music Assistant - Basic HTML/CSS/JS version",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "keywords": [
+    "music",
+    "ai",
+    "assistant",
+    "electron",
+    "desktop"
+  ],
+  "author": "AI Music Assistant",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4"
+  },
+  "build": {
+    "appId": "com.aimusicassistant.simple",
+    "productName": "AI Music Assistant",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/**/*",
+      "!src/**/*",
+      "!build/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.music"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}

@@ -1,0 +1,1169 @@
+/* styles.css */
+:root {
+    --color-background-dark: #1a1a1a;
+    --color-text-light: #e0e0e0;
+    --color-accent-silver: #c0c0c0;
+    --color-cherry-wood-dark: #4A1D1D; /* Darker base for cherry wood */
+    --color-cherry-wood-light: #7B2F2F; /* Lighter highlight for cherry wood */
+    --color-oled-bg: #000000;
+    --color-oled-text: #00ff00; /* Classic green OLED */
+    --font-mono-oled: 'Share Tech Mono', monospace; /* Will import later */
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+    color: var(--color-text-light);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100vw;
+}
+
+#app-container {
+    width: 95vw;
+    height: 95vh;
+    max-width: 1400px;
+    max-height: 900px;
+    background: linear-gradient(145deg, #1a1a1a, #0d0d0d);
+    border-radius: 20px;
+    box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.8),
+        inset 0 0 20px rgba(255, 255, 255, 0.05),
+        0 0 50px rgba(0, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    border: 3px solid var(--color-accent-silver);
+    position: relative;
+    padding: 25px;
+    box-sizing: border-box;
+    backdrop-filter: blur(10px);
+}
+
+/* Modern inner frame */
+#app-container::before {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    right: 15px;
+    bottom: 15px;
+    border: 2px solid;
+    border-image: linear-gradient(45deg, 
+        rgba(0, 255, 255, 0.3) 0%,
+        rgba(0, 255, 0, 0.3) 50%,
+        rgba(0, 255, 255, 0.3) 100%) 1;
+    border-image-slice: 1;
+    border-radius: 15px;
+    pointer-events: none;
+    box-shadow: 
+        inset 0 0 20px rgba(0, 255, 255, 0.1),
+        0 0 30px rgba(0, 255, 255, 0.05);
+}
+
+h1 {
+    text-align: center;
+    color: var(--color-text-light);
+    padding: 20px;
+    z-index: 1; /* Ensure text is above ::before pseudo-element */
+    position: relative;
+}
+
+/* Main panels layout */
+#main-panels {
+    display: flex;
+    gap: 25px;
+    height: 100%;
+    position: relative;
+    z-index: 2;
+    padding: 0;
+    flex: 1;
+}
+
+#left-panel {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 0;
+}
+
+#right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2));
+    border-radius: 12px;
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    box-shadow: 
+        inset 0 0 10px rgba(0, 255, 255, 0.1),
+        0 0 20px rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    backdrop-filter: blur(5px);
+}
+
+/* Control panels */
+#control-panel {
+    flex-grow: 1;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.3));
+    border-radius: 12px;
+    border: 1px solid rgba(0, 255, 255, 0.2);
+    box-shadow: 
+        inset 0 0 10px rgba(0, 255, 255, 0.1),
+        0 0 20px rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: blur(5px);
+}
+
+#file-management {
+    flex-grow: 1; /* Allow file management to take remaining space */
+    /* Background and border are already defined by #right-panel */
+}
+
+/* Control Panel Styles */
+.control-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+
+.control-group:last-of-type {
+    margin-bottom: 20px;
+}
+
+.control-label {
+    color: var(--color-accent-silver);
+    font-size: 0.9em;
+    width: 120px; /* Fixed width for labels */
+    flex-shrink: 0;
+}
+
+/* Toggle Switch styles */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #333; /* Off state */
+  transition: .4s;
+  border-radius: 24px;
+  border: 1px solid var(--color-accent-silver);
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: var(--color-accent-silver); /* Handle color */
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .slider {
+  background-color: #008000; /* Neon green on */
+  border-color: #00FF00;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #00FF00;
+}
+
+input:checked + .slider:before {
+  transform: translateX(26px);
+  background-color: #00FF00;
+}
+
+/* Styled Input (Text, Password) and Select */
+.styled-input, .styled-select {
+    background-color: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--color-accent-silver);
+    border-radius: 5px;
+    color: var(--color-text-light);
+    padding: 8px 12px;
+    font-size: 0.95em;
+    flex-grow: 1; /* Take remaining space */
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none; /* Remove default browser styling for select */
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.styled-input:focus, .styled-select:focus {
+    border-color: #00FFFF; /* Neon blue focus */
+    box-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+}
+
+.styled-input::placeholder {
+    color: rgba(224, 224, 224, 0.5);
+}
+
+.styled-select {
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23e0e0e0%22%20d%3D%22M287%2C197.394L154.717%2C65.107c-3.79-3.79-10.035-3.79-13.824%2C0L5.3%2C197.394c-3.79%2C3.79-3.79%2C10.035%2C0%2C13.824l19.5%2C19.5c3.79%2C3.79%2C10.035%2C3.79%2C13.824%2C0L147.8%2C116.294l95.55%2C95.55c3.79%2C3.79%2C10.035%2C3.79%2C13.824%2C0l19.5-19.5C290.79%2C207.429%2C290.79%2C201.184%2C287%2C197.394z%22%2F%3E%3C%2Fsvg%3E'); /* Custom dropdown arrow */
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+    padding-right: 30px; /* Space for arrow */
+}
+
+.styled-select option {
+    background-color: var(--color-background-dark);
+    color: var(--color-text-light);
+}
+
+/* Generation Buttons */
+.generation-buttons {
+    display: flex;
+    justify-content: space-around;
+    margin-top: auto; /* Push buttons to the bottom */
+    padding-top: 15px;
+    gap: 10px;
+}
+
+.neon-button {
+    background-color: #222;
+    color: var(--color-text-light);
+    border: 2px solid #00FF00; /* Neon green border */
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 0.9em;
+    cursor: pointer;
+    outline: none;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.4), inset 0 0 5px rgba(0, 255, 0, 0.2);
+    transition: all 0.2s ease-in-out;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.neon-button:hover {
+    background-color: rgba(0, 255, 0, 0.1);
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.7), inset 0 0 8px rgba(0, 255, 0, 0.4);
+    color: #00FF00;
+}
+
+.neon-button:active {
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.3), inset 0 0 3px rgba(0, 255, 0, 0.1);
+    transform: translateY(1px);
+}
+
+/* File Management Styles */
+.panel-header {
+    color: var(--color-accent-silver);
+    text-align: center;
+    margin: 0 0 15px 0;
+    letter-spacing: 1px;
+    font-weight: normal;
+    border-bottom: 1px solid rgba(192, 192, 192, 0.2);
+    padding-bottom: 10px;
+}
+
+.file-actions {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.action-button {
+    flex-grow: 1;
+    background-color: transparent;
+    color: var(--color-text-light);
+    border: 2px solid #00FFFF; /* Neon Cyan/Blue */
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 0.9em;
+    cursor: pointer;
+    outline: none;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.4), inset 0 0 5px rgba(0, 255, 255, 0.2);
+    transition: all 0.2s ease-in-out;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.action-button:hover {
+    background-color: rgba(0, 255, 255, 0.1);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.7), inset 0 0 8px rgba(0, 255, 255, 0.4);
+    color: #00FFFF;
+}
+
+#file-list-container {
+    flex-grow: 1;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 5px;
+    padding: 10px;
+    overflow-y: auto; /* Make it scrollable */
+    border: 1px solid rgba(192, 192, 192, 0.1);
+}
+
+#file-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.file-item {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.9em;
+    color: var(--color-text-light);
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: grid;
+    grid-template-columns: 40px 1fr 80px 100px auto;
+    gap: 10px;
+    align-items: center;
+}
+
+.file-item:last-child {
+    border-bottom: none;
+}
+
+.file-item:hover {
+    background-color: rgba(0, 255, 255, 0.1); /* Highlight on hover */
+}
+
+.file-item.no-files {
+    text-align: center;
+    padding: 20px;
+    color: rgba(224, 224, 224, 0.5);
+    font-style: italic;
+}
+
+.file-icon {
+    font-size: 1.2em;
+    min-width: 20px;
+    text-align: center;
+    margin-right: 8px;
+}
+
+.file-name {
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-type {
+    text-align: center;
+    font-size: 0.8em;
+    color: #00ffff;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.file-status {
+    text-align: center;
+    font-size: 1.1em;
+}
+
+.file-tags {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.clear-button {
+    margin-top: 15px;
+    border-color: #ff4d4d; /* Red color for destructive action */
+    box-shadow: 0 0 10px rgba(255, 77, 77, 0.4), inset 0 0 5px rgba(255, 77, 77, 0.2);
+}
+
+.clear-button:hover {
+    background-color: rgba(255, 77, 77, 0.1);
+    box-shadow: 0 0 15px rgba(255, 77, 77, 0.7), inset 0 0 8px rgba(255, 77, 77, 0.4);
+    color: #ff4d4d;
+}
+
+/* File Tag Buttons */
+.file-tags {
+    display: flex;
+    gap: 5px;
+    margin-left: 10px;
+}
+
+.tag-button {
+    background-color: rgba(0, 0, 0, 0.4);
+    color: rgba(0, 255, 255, 0.6); /* Default light cyan for tags */
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 4px;
+    padding: 3px 7px;
+    font-size: 0.7em;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tag-button:hover {
+    background-color: rgba(0, 255, 255, 0.2);
+    color: #00FFFF;
+}
+
+.tag-button.active {
+    background-color: #00FFFF; /* Neon Cyan when active */
+    color: var(--color-background-dark); /* Dark text on active */
+    border-color: #00FFFF;
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.7);
+}
+
+/* Modern OLED-style display */
+.oled-display {
+    background: linear-gradient(135deg, #000000, #0a0a0a);
+    color: var(--color-oled-text);
+    font-family: var(--font-mono-oled);
+    font-size: 1.1em;
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px solid rgba(0, 255, 0, 0.4);
+    box-shadow: 
+        inset 0 0 15px rgba(0, 255, 0, 0.3),
+        0 0 20px rgba(0, 255, 0, 0.2),
+        inset 0 0 30px rgba(0, 0, 0, 0.8);
+    text-shadow: 0 0 8px var(--color-oled-text);
+    line-height: 1.5;
+    white-space: pre;
+    margin: 0;
+    min-height: 200px;
+    max-height: 300px;
+    overflow-y: auto;
+    backdrop-filter: blur(2px);
+}
+
+/* Header Controls */
+#header-controls {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px 20px;
+    border-bottom: 1px solid rgba(192, 192, 192, 0.2);
+    margin-bottom: 10px;
+}
+
+.toggle-button {
+    background-color: #222;
+    color: var(--color-text-light);
+    border: 2px solid #00FFFF;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.9em;
+    cursor: pointer;
+    outline: none;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.4), inset 0 0 5px rgba(0, 255, 255, 0.2);
+    transition: all 0.2s ease-in-out;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.toggle-button:hover {
+    background-color: rgba(0, 255, 255, 0.1);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.7), inset 0 0 8px rgba(0, 255, 255, 0.4);
+    color: #00FFFF;
+}
+
+/* Bigger Prompt Input */
+.prompt-group {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.styled-textarea {
+    background-color: rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--color-accent-silver);
+    border-radius: 5px;
+    color: var(--color-text-light);
+    padding: 12px;
+    font-size: 0.95em;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    resize: vertical;
+    min-height: 120px;
+    font-family: inherit;
+}
+
+.styled-textarea:focus {
+    border-color: #00FFFF;
+    box-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+}
+
+.styled-textarea::placeholder {
+    color: rgba(224, 224, 224, 0.5);
+}
+
+/* Settings Page Styles */
+.settings-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.slider-value {
+    color: var(--color-accent-silver);
+    font-size: 0.9em;
+    margin-left: 10px;
+}
+
+.styled-slider {
+    flex-grow: 1;
+    margin: 0 10px;
+}
+
+.toggle-section {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(192, 192, 192, 0.2);
+}
+
+/* Status Panel Styles */
+.status-panel {
+    flex-grow: 1;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(192, 192, 192, 0.1);
+    box-shadow: inset 0 0 5px rgba(255, 255, 255, 0.05), 0 0 10px rgba(0, 0, 0, 0.4);
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.status-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-radius: 5px;
+    border: 1px solid rgba(192, 192, 192, 0.1);
+}
+
+.status-label {
+    color: var(--color-accent-silver);
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+.status-value {
+    color: #00FF00;
+    font-size: 0.9em;
+    font-family: var(--font-mono-oled);
+    text-shadow: 0 0 5px #00FF00;
+}
+
+/* Musical Elements Configuration */
+.element-group {
+    margin-bottom: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid;
+    transition: all 0.3s ease;
+}
+
+.element-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    font-weight: bold;
+    color: white;
+    text-shadow: 0 0 5px currentColor;
+}
+
+.element-icon {
+    font-size: 1.2em;
+    margin-right: 10px;
+}
+
+.element-title {
+    flex-grow: 1;
+    font-size: 0.9em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.element-controls {
+    margin-left: 10px;
+}
+
+.element-settings {
+    padding: 15px;
+    background-color: rgba(0, 0, 0, 0.3);
+    display: none;
+    transition: all 0.3s ease;
+}
+
+.element-group.active .element-settings {
+    display: block;
+}
+
+.setting-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    gap: 10px;
+}
+
+.setting-row label {
+    min-width: 120px;
+    color: var(--color-accent-silver);
+    font-size: 0.9em;
+}
+
+/* Chord Progressions - Purple */
+.chord-progressions {
+    border-color: #8A2BE2;
+    background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), rgba(138, 43, 226, 0.05));
+}
+
+.chord-progressions .element-header {
+    background: linear-gradient(135deg, #8A2BE2, #6A1B9A);
+}
+
+.chord-progressions:hover {
+    box-shadow: 0 0 15px rgba(138, 43, 226, 0.5);
+}
+
+/* Melodies - Blue */
+.melodies {
+    border-color: #4169E1;
+    background: linear-gradient(135deg, rgba(65, 105, 225, 0.1), rgba(65, 105, 225, 0.05));
+}
+
+.melodies .element-header {
+    background: linear-gradient(135deg, #4169E1, #1E3A8A);
+}
+
+.melodies:hover {
+    box-shadow: 0 0 15px rgba(65, 105, 225, 0.5);
+}
+
+/* Drums - Red */
+.drums {
+    border-color: #DC143C;
+    background: linear-gradient(135deg, rgba(220, 20, 60, 0.1), rgba(220, 20, 60, 0.05));
+}
+
+.drums .element-header {
+    background: linear-gradient(135deg, #DC143C, #8B0000);
+}
+
+.drums:hover {
+    box-shadow: 0 0 15px rgba(220, 20, 60, 0.5);
+}
+
+/* Guitar - Green */
+.guitar {
+    border-color: #32CD32;
+    background: linear-gradient(135deg, rgba(50, 205, 50, 0.1), rgba(50, 205, 50, 0.05));
+}
+
+.guitar .element-header {
+    background: linear-gradient(135deg, #32CD32, #228B22);
+}
+
+.guitar:hover {
+    box-shadow: 0 0 15px rgba(50, 205, 50, 0.5);
+}
+
+/* Piano - Gold */
+.piano {
+    border-color: #FFD700;
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05));
+}
+
+.piano .element-header {
+    background: linear-gradient(135deg, #FFD700, #B8860B);
+    color: #000;
+}
+
+.piano:hover {
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+}
+
+/* Bass - Orange */
+.bass {
+    border-color: #FF8C00;
+    background: linear-gradient(135deg, rgba(255, 140, 0, 0.1), rgba(255, 140, 0, 0.05));
+}
+
+.bass .element-header {
+    background: linear-gradient(135deg, #FF8C00, #FF4500);
+}
+
+.bass:hover {
+    box-shadow: 0 0 15px rgba(255, 140, 0, 0.5);
+}
+
+/* Strings - Cyan */
+.strings {
+    border-color: #00CED1;
+    background: linear-gradient(135deg, rgba(0, 206, 209, 0.1), rgba(0, 206, 209, 0.05));
+}
+
+.strings .element-header {
+    background: linear-gradient(135deg, #00CED1, #008B8B);
+}
+
+.strings:hover {
+    box-shadow: 0 0 15px rgba(0, 206, 209, 0.5);
+}
+
+/* Brass - Magenta */
+.brass {
+    border-color: #FF1493;
+    background: linear-gradient(135deg, rgba(255, 20, 147, 0.1), rgba(255, 20, 147, 0.05));
+}
+
+.brass .element-header {
+    background: linear-gradient(135deg, #FF1493, #8B008B);
+}
+
+.brass:hover {
+    box-shadow: 0 0 15px rgba(255, 20, 147, 0.5);
+}
+
+/* Percussion - Lime */
+.percussion {
+    border-color: #32CD32;
+    background: linear-gradient(135deg, rgba(50, 205, 50, 0.1), rgba(50, 205, 50, 0.05));
+}
+
+.percussion .element-header {
+    background: linear-gradient(135deg, #32CD32, #228B22);
+}
+
+.percussion:hover {
+    box-shadow: 0 0 15px rgba(50, 205, 50, 0.5);
+}
+
+/* Training Progress */
+#training-progress {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(192, 192, 192, 0.1);
+}
+
+#training-progress h4 {
+    color: var(--color-accent-silver);
+    margin: 0 0 15px 0;
+    text-align: center;
+}
+
+.progress-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.progress-bar {
+    flex-grow: 1;
+    height: 20px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid rgba(192, 192, 192, 0.2);
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00FF00, #00FFFF);
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+.progress-text {
+    color: #00FF00;
+    font-family: var(--font-mono-oled);
+    font-size: 0.9em;
+    min-width: 40px;
+}
+
+.training-status {
+    color: var(--color-accent-silver);
+    font-size: 0.9em;
+    text-align: center;
+    font-style: italic;
+}
+
+.training-button {
+    background-color: #00FF00;
+    color: #000;
+    border-color: #00FF00;
+    font-weight: bold;
+}
+
+.training-button:hover {
+    background-color: #00CC00;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.8);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    #app-container {
+        width: 98vw;
+        height: 98vh;
+        padding: 15px;
+    }
+    
+    #main-panels {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    #left-panel, #right-panel {
+        flex: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    #app-container {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+        padding: 10px;
+    }
+    
+    .oled-display {
+        min-height: 150px;
+        max-height: 200px;
+        font-size: 0.9em;
+        padding: 15px;
+    }
+    
+    .generation-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .neon-button {
+        padding: 12px 20px;
+        font-size: 0.8em;
+    }
+}
+
+/* Modern scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(45deg, #00FFFF, #00FF00);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(45deg, #00FF00, #00FFFF);
+}
+
+/* Settings Page Layout Fixes */
+.settings-container {
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.settings-section {
+    margin-bottom: 30px;
+}
+
+/* Fix file list layout */
+.file-list-container {
+    max-height: 300px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Fix file item grid layout */
+.file-item {
+    display: grid;
+    grid-template-columns: 30px 1fr 80px 100px auto;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 0.9em;
+    color: var(--color-text-light);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.file-item:hover {
+    background-color: rgba(0, 255, 255, 0.1);
+}
+
+.file-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.file-type {
+    text-align: center;
+    font-size: 0.8em;
+    color: #00ffff;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.file-status {
+    text-align: center;
+    font-size: 1.1em;
+}
+
+/* Color coding for OLED display */
+.oled-chord { color: #ff6b6b; } /* Red for chord progressions */
+.oled-melody { color: #4ecdc4; } /* Teal for melodies */
+.oled-drum { color: #ffe66d; } /* Yellow for drums */
+.oled-guitar { color: #ff8e53; } /* Orange for guitar */
+.oled-piano { color: #a8e6cf; } /* Green for piano */
+.oled-bass { color: #ffd93d; } /* Gold for bass */
+.oled-string { color: #b4a7d6; } /* Purple for strings */
+.oled-brass { color: #ff9ff3; } /* Pink for brass */
+.oled-percussion { color: #54a0ff; } /* Blue for percussion */
+
+/* Smooth animations */
+* {
+    transition: all 0.3s ease;
+}
+
+/* Modern focus states */
+input:focus, textarea:focus, select:focus {
+    transform: scale(1.02);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+/* Settings Navigation */
+#settings-navigation {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 5px;
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+}
+
+.nav-button {
+    flex: 1;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9em;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.nav-button:hover {
+    background: rgba(0, 255, 255, 0.1);
+    color: #00ffff;
+    border-color: #00ffff;
+    transform: translateY(-1px);
+}
+
+.nav-button.active {
+    background: linear-gradient(135deg, #00ff88, #00ccff);
+    color: #000;
+    border-color: #00ff88;
+    box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+}
+
+.settings-section {
+    display: none;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.settings-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Model Configuration Styles */
+.model-section {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.section-title {
+    color: #00ffff;
+    font-size: 1.1em;
+    margin: 0 0 15px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+}
+
+.test-result {
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 0.9em;
+    min-height: 20px;
+}
+
+.test-result.success {
+    background: rgba(0, 255, 0, 0.1);
+    border: 1px solid #00ff00;
+    color: #00ff00;
+}
+
+.test-result.error {
+    background: rgba(255, 0, 0, 0.1);
+    border: 1px solid #ff0000;
+    color: #ff0000;
+}
+
+/* File Management Styles */
+.upload-section, .processing-section, .library-stats {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.upload-info {
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.upload-info ul {
+    margin: 5px 0 0 20px;
+    padding: 0;
+}
+
+.upload-info li {
+    margin: 3px 0;
+}
+
+.processing-status {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.processing-status .status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.file-list-header {
+    display: grid;
+    grid-template-columns: 40px 1fr 80px 100px;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 0.9em;
+    color: #00ffff;
+    margin-bottom: 5px;
+}
+
+.file-list-header span {
+    text-align: center;
+}
+
+.file-list-header .file-name-header {
+    text-align: left;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.stat-icon {
+    font-size: 1.2em;
+}
+
+.stat-label {
+    flex: 1;
+    font-size: 0.9em;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.stat-value {
+    font-weight: bold;
+    color: #00ffff;
+    font-size: 1.1em;
+}

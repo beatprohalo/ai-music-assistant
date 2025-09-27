@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>AI Music Assistant - Simple Version</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app-container">
+        <div id="header-controls">
+            <button id="toggle-settings-btn" class="neon-button toggle-button">SETTINGS</button>
+        </div>
+        <div id="main-panels">
+            <div id="left-panel">
+                <div class="oled-display">
+                    > QUANTUM VAULT // ACCESSING DATA<br>
+                    &nbsp;&nbsp;HUMANIZER AI // READY.<br>
+                    &nbsp;&nbsp;LIBRARY STATUS:<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- CHORDS: 17,862<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- MELODIES: 5,120<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- GROOVES: 0,120<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- MOODS: $78.2 TRILLON<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- REAL-TIME GAIN +17%<br>
+                    <br>
+                    > SYSTEM READY FOR GENERATION<br>
+                    &nbsp;&nbsp;READY FOR MUSICAL INPUT<br>
+                </div>
+                <div id="control-panel">
+                    <h3 class="panel-header">MUSICAL GENERATION</h3>
+                    
+                    <div class="control-group prompt-group">
+                        <label class="control-label">MUSICAL PROMPT</label>
+                        <textarea id="musicalPromptInput" class="styled-textarea prompt-input" placeholder="Enter your musical prompt here... Describe the style, mood, instruments, tempo, or any specific musical elements you want to generate..."></textarea>
+                    </div>
+
+                    <div class="generation-buttons">
+                        <button class="neon-button generate-humanize">GENERATE HUMANIZATION</button>
+                        <button class="neon-button generate-midi">GENERATE MIDI</button>
+                        <button class="neon-button generate-both">GENERATE BOTH</button>
+                    </div>
+                </div>
+            </div>
+            <div id="right-panel">
+                <div class="status-panel">
+                    <h3 class="panel-header">SYSTEM STATUS</h3>
+                    <div class="status-info">
+                        <div class="status-item">
+                            <span class="status-label">AI MODELS:</span>
+                            <span class="status-value" id="ai-status">READY</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">VECTOR DB:</span>
+                            <span class="status-value" id="db-status">CONNECTED</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">FILES LOADED:</span>
+                            <span class="status-value" id="files-status">0</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">LAST GENERATION:</span>
+                            <span class="status-value" id="last-gen">NONE</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Simple JavaScript for the app
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('AI Music Assistant loaded!');
+            
+            // Toggle settings button
+            const toggleSettingsBtn = document.getElementById('toggle-settings-btn');
+            if (toggleSettingsBtn) {
+                toggleSettingsBtn.addEventListener('click', () => {
+                    alert('Settings page would open here! This is a demo version.');
+                });
+            }
+            
+            // Generation buttons
+            const generateHumanizeBtn = document.querySelector('.generate-humanize');
+            const generateMidiBtn = document.querySelector('.generate-midi');
+            const generateBothBtn = document.querySelector('.generate-both');
+            
+            if (generateHumanizeBtn) {
+                generateHumanizeBtn.addEventListener('click', () => {
+                    alert('Humanization generation would start here!');
+                });
+            }
+            
+            if (generateMidiBtn) {
+                generateMidiBtn.addEventListener('click', () => {
+                    alert('MIDI generation would start here!');
+                });
+            }
+            
+            if (generateBothBtn) {
+                generateBothBtn.addEventListener('click', () => {
+                    alert('Both humanization and MIDI generation would start here!');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
