@@ -1,0 +1,25 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "AI-powered desktop music assistant with upload functionality",
+  "main": "main.js",
+  "scripts": {
+    "start": "npx electron .",
+    "test": "xvfb-run --auto-servernum --server-args=\"-screen 0 1024x768x24\" npx electron . --test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/beatprohalo/ai-music-assistant.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/beatprohalo/ai-music-assistant/issues"
+  },
+  "homepage": "https://github.com/beatprohalo/ai-music-assistant#readme",
+  "devDependencies": {
+    "electron": "^38.1.2"
+  }
+}
