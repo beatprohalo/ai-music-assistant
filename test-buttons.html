@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval';">
+    <title>Button Test</title>
+    <style>
+        body { 
+            background: #1a1a1a; 
+            color: white; 
+            padding: 20px; 
+            font-family: Arial, sans-serif; 
+        }
+        button { 
+            padding: 15px 30px; 
+            margin: 10px; 
+            background: #00ff00; 
+            color: black; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 16px;
+        }
+        button:hover {
+            background: #00cc00;
+        }
+        #output { 
+            margin-top: 20px; 
+            padding: 15px; 
+            background: #333; 
+            border-radius: 5px; 
+            min-height: 200px;
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .info { color: #00ffff; }
+    </style>
+</head>
+<body>
+    <h1>Upload Button Test</h1>
+    <button id="test-upload">Test Upload Files</button>
+    <button id="test-folder">Test Scan Folder</button>
+    <button id="test-ipc">Test IPC Connection</button>
+    <div id="output"></div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        function output(message, type = 'info') {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            output.innerHTML += `<div class="${type}">${timestamp}: ${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        // Test IPC connection
+        document.getElementById('test-ipc').addEventListener('click', () => {
+            output('Testing IPC connection...', 'info');
+            try {
+                if (ipcRenderer) {
+                    output('IPC Renderer is available', 'success');
+                } else {
+                    output('IPC Renderer is NOT available', 'error');
+                }
+            } catch (error) {
+                output(`IPC Error: ${error.message}`, 'error');
+            }
+        });
+        
+        // Test file upload
+        document.getElementById('test-upload').addEventListener('click', async () => {
+            try {
+                output('Testing file upload...', 'info');
+                const files = await ipcRenderer.invoke('open-file-dialog');
+                if (files && files.length > 0) {
+                    output(`SUCCESS: ${files.length} files selected`, 'success');
+                    files.forEach((file, index) => {
+                        output(`File ${index + 1}: ${file}`, 'info');
+                    });
+                } else {
+                    output('No files selected', 'info');
+                }
+            } catch (error) {
+                output(`ERROR: ${error.message}`, 'error');
+            }
+        });
+        
+        // Test folder scan
+        document.getElementById('test-folder').addEventListener('click', async () => {
+            try {
+                output('Testing folder scan...', 'info');
+                const folder = await ipcRenderer.invoke('open-folder-dialog');
+                if (folder) {
+                    output(`SUCCESS: Folder selected: ${folder}`, 'success');
+                } else {
+                    output('No folder selected', 'info');
+                }
+            } catch (error) {
+                output(`ERROR: ${error.message}`, 'error');
+            }
+        });
+        
+        output('Button test page loaded', 'success');
+    </script>
+</body>
+</html>

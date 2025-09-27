@@ -1,0 +1,17 @@
+{
+  "name": "ai-music-assistant",
+  "version": "1.0.0",
+  "description": "AI Music Assistant - Desktop app for music analysis and generation",
+  "main": "main.js",
+  "scripts": {
+    "start": "./node_modules/.bin/electron ."
+  },
+  "dependencies": {
+    "@tonejs/midi": "^2.0.28",
+    "meyda": "^5.6.3",
+    "web-audio-api": "^0.2.2"
+  },
+  "devDependencies": {
+    "electron": "^38.1.2"
+  }
+}

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval';">
+    <title>AI Music Assistant - Settings</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app-container">
+        <div id="header-controls">
+            <button id="toggle-main-btn" class="neon-button toggle-button">MAIN APP</button>
+        </div>
+        <div id="main-panels">
+            <div id="left-panel">
+                <div class="oled-display">
+                    > SETTINGS // CONFIGURATION<br>
+                    &nbsp;&nbsp;MUSICAL ELEMENTS // TRAINING<br>
+                    &nbsp;&nbsp;FILE MANAGEMENT // DATA INGEST<br>
+                    &nbsp;&nbsp;STATUS:<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- CHORD PROGRESSIONS: READY<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- MELODIES: READY<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- DRUMS: READY<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;- INSTRUMENTS: READY<br>
+                    <br>
+                    > AWAITING CONFIGURATION . . .
+                </div>
+                
+                <div id="control-panel">
+                    <h3 class="panel-header">MUSICAL ELEMENTS CONFIGURATION</h3>
+                    
+                    <!-- Chord Progressions -->
+                    <div class="element-group chord-progressions">
+                        <div class="element-header">
+                            <span class="element-icon">🎵</span>
+                            <span class="element-title">CHORD PROGRESSIONS</span>
+                            <div class="element-controls">
+                                <label class="switch">
+                                    <input type="checkbox" id="chordProgressionsToggle" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="element-settings">
+                            <div class="setting-row">
+                                <label>Complexity Level:</label>
+                                <select class="styled-select">
+                                    <option value="simple">Simple (I-V-vi-IV)</option>
+                                    <option value="intermediate">Intermediate (Jazz)</option>
+                                    <option value="advanced">Advanced (Complex)</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>Key Preferences:</label>
+                                <input type="text" class="styled-input" placeholder="C, G, D, A, E, B, F#">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Melodies -->
+                    <div class="element-group melodies">
+                        <div class="element-header">
+                            <span class="element-icon">🎼</span>
+                            <span class="element-title">MELODIES</span>
+                            <div class="element-controls">
+                                <label class="switch">
+                                    <input type="checkbox" id="melodiesToggle" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="element-settings">
+                            <div class="setting-row">
+                                <label>Style:</label>
+                                <select class="styled-select">
+                                    <option value="classical">Classical</option>
+                                    <option value="jazz">Jazz</option>
+                                    <option value="pop">Pop</option>
+                                    <option value="blues">Blues</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>Range:</label>
+                                <input type="range" class="styled-slider" min="1" max="5" value="3">
+                                <span class="slider-value">Medium</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Drums -->
+                    <div class="element-group drums">
+                        <div class="element-header">
+                            <span class="element-icon">🥁</span>
+                            <span class="element-title">DRUMS</span>
+                            <div class="element-controls">
+                                <label class="switch">
+                                    <input type="checkbox" id="drumsToggle" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="element-settings">
+                            <div class="setting-row">
+                                <label>Pattern Type:</label>
+                                <select class="styled-select">
+                                    <option value="basic">Basic Rock</option>
+                                    <option value="jazz">Jazz Swing</option>
+                                    <option value="funk">Funk</option>
+                                    <option value="electronic">Electronic</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>Complexity:</label>
+                                <input type="range" class="styled-slider" min="1" max="5" value="3">
+                                <span class="slider-value">Medium</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Guitar -->
+                    <div class="element-group guitar">
+                        <div class="element-header">
+                            <span class="element-icon">🎸</span>
+                            <span class="element-title">GUITAR</span>
+                            <div class="element-controls">
+                                <label class="switch">
+                                    <input type="checkbox" id="guitarToggle" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="element-settings">
+                            <div class="setting-row">
+                                <label>Type:</label>
+                                <select class="styled-select">
+                                    <option value="acoustic">Acoustic</option>
+                                    <option value="electric">Electric</option>
+                                    <option value="classical">Classical</option>
+                                    <option value="bass">Bass</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>Technique:</label>
+                                    <input type="text" class="styled-input" placeholder="Strumming, Fingerpicking, etc.">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Piano -->
+                    <div class="element-group piano">
+                        <div class="element-header">
+                            <span class="element-icon">🎹</span>
+                            <span class="element-title">PIANO</span>
+                            <div class="element-controls">
+                                <label class="switch">
+                                    <input type="checkbox" id="pianoToggle" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="element-settings">
+                            <div class="setting-row">
+                                <label>Style:</label>
+                                <select class="styled-select">
+                                    <option value="classical">Classical</option>
+                                    <option value="jazz">Jazz</option>
+                                    <option value="blues">Blues</option>
+                                    <option value="pop">Pop</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>Voicing:</label>
+                                <input type="text" class="styled-input" placeholder="Root, 3rd, 5th, 7th">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bass -->
+                    <div class="element-group bass">
+                        <div class="element-header">
+                            <span class="element-icon">🎸</span>
+                            <span class="element-title">BASS</span>
+                            <div class="element-controls">
+                                <label class="switch">
+                                    <input type="checkbox" id="bassToggle" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="element-settings">
+                            <div class="setting-row">
+                                <label>Pattern:</label>
+                                <select class="styled-select">
+                                    <option value="walking">Walking Bass</option>
+                                    <option value="root">Root Notes</option>
+                                    <option value="slap">Slap Bass</option>
+                                    <option value="funk">Funk Lines</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>Octave:</label>
+                                <input type="range" class="styled-slider" min="1" max="3" value="2">
+                                <span class="slider-value">Standard</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Strings -->
+                    <div class="element-group strings">
+                        <div class="element-header">
+                            <span class="element-icon">🎻</span>
+                            <span class="element-title">STRINGS</span>
+                            <div class="element-controls">
+                                <label class="switch">
+                                    <input type="checkbox" id="stringsToggle" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="element-settings">
+                            <div class="setting-row">
+                                <label>Section:</label>
+                                <select class="styled-select">
+                                    <option value="violin">Violin</option>
+                                    <option value="viola">Viola</option>
+                                    <option value="cello">Cello</option>
+                                    <option value="double-bass">Double Bass</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>Articulation:</label>
+                                <input type="text" class="styled-input" placeholder="Legato, Staccato, Pizzicato">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Brass -->
+                    <div class="element-group brass">
+                        <div class="element-header">
+                            <span class="element-icon">🎺</span>
+                            <span class="element-title">BRASS</span>
+                            <div class="element-controls">
+                                <label class="switch">
+                                    <input type="checkbox" id="brassToggle" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="element-settings">
+                            <div class="setting-row">
+                                <label>Instrument:</label>
+                                <select class="styled-select">
+                                    <option value="trumpet">Trumpet</option>
+                                    <option value="trombone">Trombone</option>
+                                    <option value="saxophone">Saxophone</option>
+                                    <option value="french-horn">French Horn</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>Mute:</label>
+                                <input type="text" class="styled-input" placeholder="Straight, Cup, Harmon">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Percussion -->
+                    <div class="element-group percussion">
+                        <div class="element-header">
+                            <span class="element-icon">🎪</span>
+                            <span class="element-title">PERCUSSION</span>
+                            <div class="element-controls">
+                                <label class="switch">
+                                    <input type="checkbox" id="percussionToggle" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="element-settings">
+                            <div class="setting-row">
+                                <label>Type:</label>
+                                <select class="styled-select">
+                                    <option value="timbales">Timbales</option>
+                                    <option value="congas">Congas</option>
+                                    <option value="bongos">Bongos</option>
+                                    <option value="shakers">Shakers</option>
+                                </select>
+                            </div>
+                            <div class="setting-row">
+                                <label>Pattern:</label>
+                                <input type="text" class="styled-input" placeholder="Salsa, Samba, etc.">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="right-panel">
+                <div id="settings-navigation">
+                    <button id="nav-llm-btn" class="nav-button active">LLM & AI</button>
+                    <button id="nav-files-btn" class="nav-button">FILES</button>
+                    <button id="nav-training-btn" class="nav-button">TRAINING</button>
+                </div>
+                
+                <!-- Settings Content with Scrollbar -->
+                <div class="settings-content">
+                <!-- LLM & AI Configuration Section -->
+                <div id="llm-section" class="settings-section active">
+                    <h3 class="panel-header">🤖 LLM & AI CONFIGURATION</h3>
+                    
+                    <!-- Local Model Configuration -->
+                    <div class="model-section">
+                        <h4 class="section-title">🏠 LOCAL MODEL</h4>
+                        <div class="control-group">
+                            <label class="control-label">ENABLE LOCAL LLM</label>
+                            <label class="switch">
+                                <input type="checkbox" id="localLlmToggle">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">MODEL PATH</label>
+                            <input type="text" id="localModelPath" class="styled-input" placeholder="/path/to/your/model">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">MODEL TYPE</label>
+                            <select id="localModelType" class="styled-select">
+                                <option value="gemma-2b">Gemma 2B</option>
+                                <option value="llama-2-7b">Llama 2 7B</option>
+                                <option value="mistral-7b">Mistral 7B</option>
+                                <option value="custom">Custom Model</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">GPU ACCELERATION</label>
+                            <label class="switch">
+                                <input type="checkbox" id="gpuAcceleration">
+                                <span class="slider round"></span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Cloud Model Configuration -->
+                    <div class="model-section">
+                        <h4 class="section-title">☁️ CLOUD MODELS</h4>
+                        <div class="control-group">
+                            <label class="control-label">CLOUD PROVIDER</label>
+                            <select id="cloudLlmProvider" class="styled-select">
+                                <option value="none">None</option>
+                                <option value="google">Google Gemini</option>
+                                <option value="openai">OpenAI GPT</option>
+                                <option value="anthropic">Anthropic Claude</option>
+                                <option value="cohere">Cohere</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">API KEY</label>
+                            <input type="password" id="apiKeyInput" class="styled-input" placeholder="Enter your API key">
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">MODEL NAME</label>
+                            <select id="modelName" class="styled-select">
+                                <option value="gpt-4">GPT-4</option>
+                                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                                <option value="gemini-pro">Gemini Pro</option>
+                                <option value="claude-3-opus">Claude 3 Opus</option>
+                                <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">MODEL SIZE</label>
+                            <select id="modelSize" class="styled-select">
+                                <option value="small">Small</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="large">Large</option>
+                                <option value="xlarge">X-Large</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">TEMPERATURE</label>
+                            <input type="range" id="temperatureSlider" class="styled-slider" min="0" max="100" value="70">
+                            <span class="slider-value" id="temperatureValue">0.7</span>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">MAX TOKENS</label>
+                            <input type="number" id="maxTokens" class="styled-input" placeholder="1000" value="1000">
+                        </div>
+                    </div>
+                    
+                    <!-- Model Testing -->
+                    <div class="model-section">
+                        <h4 class="section-title">🧪 MODEL TESTING</h4>
+                        <div class="control-group">
+                            <button id="testModelBtn" class="action-button">TEST MODEL CONNECTION</button>
+                        </div>
+                        <div id="modelTestResult" class="test-result"></div>
+                    </div>
+                </div>
+                
+                <!-- File Management Section -->
+                <div id="files-section" class="settings-section">
+                    <h3 class="panel-header">📁 FILE MANAGEMENT & TRAINING DATA</h3>
+                    
+                    <!-- Upload Controls -->
+                    <div class="upload-section">
+                        <h4 class="section-title">📤 UPLOAD TRAINING DATA</h4>
+                        <div class="file-actions">
+                            <button id="test-ipc-btn" class="action-button">🧪 TEST IPC</button>
+                            <button id="test-sync-btn" class="action-button">🔄 TEST SYNC</button>
+                            <button id="upload-files-btn" class="action-button">📁 UPLOAD FILES</button>
+                            <button id="scan-folder-btn" class="action-button">📂 SCAN FOLDER</button>
+                        </div>
+                        
+                        <div class="upload-info">
+                            <p><strong>Supported Formats:</strong></p>
+                            <ul>
+                                <li>🎼 MIDI Files: .mid, .midi</li>
+                                <li>🔊 Audio Files: .mp3, .wav, .flac, .aiff, .m4a, .ogg, .aac</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- File Processing Status -->
+                    <div class="processing-section">
+                        <h4 class="section-title">⚙️ FILE PROCESSING</h4>
+                        <div id="processing-status" class="processing-status">
+                            <div class="status-item">
+                                <span class="status-label">📊 Files Analyzed:</span>
+                                <span class="status-value" id="analyzed-count">0</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">🎵 MIDI Files:</span>
+                                <span class="status-value" id="midi-count">0</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">🔊 Audio Files:</span>
+                                <span class="status-value" id="audio-count">0</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">🧠 Features Extracted:</span>
+                                <span class="status-value" id="features-count">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- File List -->
+                    <div id="file-list-container">
+                        <h4>📋 LOADED FILES</h4>
+                        <div class="file-list-header">
+                            <span class="file-icon-header">📄</span>
+                            <span class="file-name-header">FILENAME</span>
+                            <span class="file-type-header">TYPE</span>
+                            <span class="file-status-header">STATUS</span>
+                        </div>
+                        <ul id="file-list">
+                            <!-- Files will be populated here -->
+                        </ul>
+                    </div>
+                    
+                    <!-- Library Statistics -->
+                    <div class="library-stats">
+                        <h4 class="section-title">📈 LIBRARY STATISTICS</h4>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span class="stat-icon">🎵</span>
+                                <span class="stat-label">Chord Progressions</span>
+                                <span class="stat-value" id="chord-stats">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-icon">🎼</span>
+                                <span class="stat-label">Melodies</span>
+                                <span class="stat-value" id="melody-stats">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-icon">🥁</span>
+                                <span class="stat-label">Drum Patterns</span>
+                                <span class="stat-value" id="drum-stats">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-icon">🎸</span>
+                                <span class="stat-label">Guitar Riffs</span>
+                                <span class="stat-value" id="guitar-stats">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <div class="settings-actions">
+                        <button id="process-files-btn" class="action-button">⚙️ PROCESS FILES</button>
+                        <button id="export-library-btn" class="action-button">📤 EXPORT LIBRARY</button>
+                        <button id="import-library-btn" class="action-button">📥 IMPORT LIBRARY</button>
+                        <button id="clear-data-btn" class="action-button clear-button">🗑️ CLEAR ALL DATA</button>
+                    </div>
+                </div>
+                
+                <!-- Training Section -->
+                <div id="training-section" class="settings-section">
+                    <h3 class="panel-header">AI TRAINING</h3>
+                
+                <div id="training-progress">
+                    <h4>Training Progress</h4>
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                        <span class="progress-text" id="progress-text">0%</span>
+                    </div>
+                    <div class="training-status" id="training-status">Ready to train</div>
+                </div>
+                
+                <div id="file-list-container">
+                    <h4>Loaded Files</h4>
+                    <ul id="file-list">
+                        <!-- Files will be populated here -->
+                    </ul>
+                </div>
+                
+                <div class="settings-actions">
+                    <button id="start-training-btn" class="action-button training-button">START TRAINING</button>
+                    <button id="clear-data-btn" class="action-button clear-button">CLEAR ALL DATA</button>
+                    <button id="export-settings-btn" class="action-button">EXPORT SETTINGS</button>
+                    <button id="import-settings-btn" class="action-button">IMPORT SETTINGS</button>
+                </div>
+            </div>
+                </div> <!-- Close settings-content -->
+            </div>
+        </div>
+    </div>
+    
+    <script src="settings.js"></script>
+</body>
+</html>
