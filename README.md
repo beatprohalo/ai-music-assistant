@@ -1,40 +1,68 @@
 # AI Music Assistant
 
-A powerful desktop application for music analysis, generation, and humanization using AI technology. Built with Electron and featuring advanced audio processing capabilities.
+A desktop application for AI-powered music analysis and generation, built with Electron and Svelte.
 
-## 🎵 Features
+## Features
 
-### Core Functionality
-- **Audio Analysis**: Extract features from audio files (WAV, MP3, FLAC, AIFF, M4A, OGG, AAC)
-- **MIDI Processing**: Analyze and generate MIDI files
-- **AI-Powered Generation**: Create music using advanced AI models
-- **Humanization**: Add natural timing and velocity variations to MIDI
-- **Vector Database**: Store and search musical patterns using embeddings
+### 🎵 Audio Analysis
+- **Audio-to-MIDI Conversion**: Convert audio files to MIDI using Basic Pitch (TensorFlow.js)
+- **Feature Extraction**: Analyze audio characteristics using Meyda.js
+- **MIDI Analysis**: Parse and analyze MIDI files with @tonejs/midi
+- **Vector Embeddings**: Generate embeddings for similarity search
 
-### Upload & Management
-- **File Upload**: Support for individual files and bulk folder uploads
-- **Format Support**: Audio (WAV, MP3, FLAC, AIFF, M4A, OGG, AAC) and MIDI (MID, MIDI)
-- **Library Management**: Organize and categorize your music library
-- **Recursive Scanning**: Automatically scan subdirectories for audio files
+### 🧠 AI Integration
+- **Multiple LLM Support**: OpenAI, Anthropic, Google, and local models (Gemma 2B)
+- **Intelligent Music Generation**: Generate music based on natural language prompts
+- **Context-Aware**: Uses your library to provide relevant musical context
 
-### AI Integration
-- **LLM Support**: Integration with OpenAI, Anthropic, Google, and local models
-- **Music Generation**: AI-powered music creation from text prompts
-- **Pattern Recognition**: Identify and learn from musical patterns
-- **Smart Categorization**: Automatic tagging of musical elements
+### 📚 Library Management
+- **Vector Database**: Store and search musical patterns using LanceDB
+- **Category System**: Organize files as "Humanization" or "Patterns"
+- **Similarity Search**: Find similar musical content in your library
+- **Statistics**: Track library usage and file statistics
 
-## 🚀 Getting Started
+### 🎼 Music Generation
+- **Multiple Output Formats**: MIDI files (.mid) and Logic Pro Scripter (.json)
+- **Algorithmic Generation**: JavaScript-based MIDI generation algorithms
+- **Style Support**: Melodic, rhythmic, harmonic, and experimental styles
+- **Customizable Parameters**: Tempo, key, time signature, and more
 
-### Prerequisites
-- Node.js (v16 or higher)
-- npm or yarn
-- macOS, Windows, or Linux
+## Architecture
 
-### Installation
+### Core Components
+
+1. **Audio/MIDI Analysis Engine** (`src/audio/AudioAnalyzer.js`)
+   - Converts audio to MIDI using Basic Pitch
+   - Extracts musical features with Meyda.js
+   - Analyzes MIDI data for patterns and characteristics
+
+2. **Vector Database** (`src/database/VectorDatabase.js`)
+   - SQLite-based storage with vector similarity search
+   - Stores file metadata, features, and embeddings
+   - Provides library statistics and search capabilities
+
+3. **LLM Orchestrator** (`src/llm/LLMOrchestrator.js`)
+   - Manages multiple LLM providers
+   - Handles API keys and configuration
+   - Provides unified interface for AI generation
+
+4. **Music Generation Engine** (`src/generation/MusicGenerator.js`)
+   - Implements MIDI generation algorithms
+   - Supports multiple output formats
+   - Generates melodies, harmonies, rhythms, and basslines
+
+### User Interface
+
+- **Dashboard**: Main interface for file processing and music generation
+- **Library Management**: View and manage analyzed files
+- **Settings**: Configure LLM providers and application preferences
+- **File Uploader**: Advanced drag-and-drop interface with category tagging
+
+## Installation
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/ai-music-assistant.git
+   git clone <repository-url>
    cd ai-music-assistant
    ```
 
@@ -43,142 +71,127 @@ A powerful desktop application for music analysis, generation, and humanization 
    npm install
    ```
 
-3. **Run the application**
-   ```bash
-   npm start
-   ```
-
-### Development
-
-1. **Install development dependencies**
-   ```bash
-   npm install --save-dev
-   ```
-
-2. **Run in development mode**
+3. **Start development server**
    ```bash
    npm run dev
    ```
 
-## 📁 Project Structure
+## Configuration
 
-```
-ai-music-assistant/
-├── src/                    # Source code
-│   ├── audio/             # Audio processing modules
-│   ├── database/          # Vector database implementation
-│   ├── generation/        # Music generation logic
-│   ├── llm/              # LLM integration
-│   └── renderer/         # Frontend components (Svelte)
-├── main.js               # Main Electron process
-├── settings.html         # Settings page
-├── index.html            # Main application page
-├── package.json          # Project configuration
-└── README.md             # This file
-```
+### LLM Providers
 
-## 🎛️ Usage
+The app supports multiple LLM providers:
 
-### Uploading Files
-1. **Open Settings**: Click the "SETTINGS" button in the main interface
-2. **Upload Files**: Use "📁 UPLOAD FILES" for individual files or "📂 SCAN FOLDER" for bulk uploads
-3. **Categorize**: Select categories (Humanization, Patterns) for your files
-4. **Process**: Files are automatically analyzed and added to your library
+- **OpenAI**: GPT-4, GPT-3.5
+- **Anthropic**: Claude models
+- **Google**: Gemini models
+- **Local**: Gemma 2B (requires local model files)
 
-### Generating Music
-1. **Enter Prompt**: Describe the music you want to generate
-2. **Select Type**: Choose between humanization, MIDI generation, or both
-3. **Generate**: Click the appropriate generation button
-4. **Download**: Save your generated music
+### API Keys
 
-### AI Configuration
-1. **LLM Settings**: Configure your preferred AI model in settings
-2. **API Keys**: Add your API keys for cloud-based models
-3. **Local Models**: Set up local models for offline processing
+Configure your API keys in the Settings page:
+- OpenAI: Get from [OpenAI Platform](https://platform.openai.com/api-keys)
+- Anthropic: Get from [Anthropic Console](https://console.anthropic.com/)
+- Google: Get from [Google AI Studio](https://makersuite.google.com/app/apikey)
 
-## 🔧 Configuration
+## Usage
 
-### Supported Audio Formats
-- **Audio**: WAV, MP3, FLAC, AIFF, M4A, OGG, AAC
+### 1. Upload and Analyze Files
+
+1. Go to the Dashboard
+2. Drag and drop audio files or click "browse files"
+3. Select categories (Humanization, Patterns, or both)
+4. Click "Upload & Analyze Files"
+
+### 2. Generate Music
+
+1. In the Dashboard, enter a musical description
+2. Choose output format (MIDI or Logic Pro Scripter)
+3. Select a style (Melodic, Rhythmic, Harmonic, Experimental)
+4. Click "Generate Music"
+
+### 3. Manage Library
+
+1. Go to the Library tab
+2. View statistics and file information
+3. Search and filter files
+4. Clear or reindex the library
+
+### 4. Configure Settings
+
+1. Go to the Settings tab
+2. Select an LLM provider
+3. Enter API keys
+4. Configure audio analysis options
+5. Save settings
+
+## File Formats
+
+### Supported Input Formats
+- **Audio**: WAV, MP3, FLAC, AIFF, M4A
 - **MIDI**: MID, MIDI
 
-### AI Model Support
-- **OpenAI**: GPT-3.5, GPT-4
-- **Anthropic**: Claude 3 Opus, Claude 3 Sonnet
-- **Google**: Gemini Pro
-- **Local Models**: Custom model support
+### Output Formats
+- **MIDI**: Standard MIDI files (.mid)
+- **Logic Pro Scripter**: JSON format for Logic Pro (.json)
 
-### Database
-- **Vector Storage**: Efficient similarity search
-- **Embeddings**: Musical pattern representations
-- **Categorization**: Automatic tagging system
+## Development
 
-## 🛠️ Development
+### Project Structure
+
+```
+src/
+├── main.js                 # Electron main process
+├── preload.js             # Preload script for IPC
+├── audio/
+│   └── AudioAnalyzer.js   # Audio/MIDI analysis
+├── database/
+│   └── VectorDatabase.js  # Vector database operations
+├── llm/
+│   └── LLMOrchestrator.js # LLM provider management
+├── generation/
+│   └── MusicGenerator.js  # Music generation algorithms
+└── renderer/              # Svelte frontend
+    ├── src/
+    │   ├── App.svelte
+    │   ├── components/
+    │   │   ├── Dashboard.svelte
+    │   │   ├── Library.svelte
+    │   │   ├── Settings.svelte
+    │   │   ├── FileUploader.svelte
+    │   │   ├── MusicGenerator.svelte
+    │   │   └── ProcessingStatus.svelte
+    │   └── main.js
+    └── index.html
+```
 
 ### Building
+
 ```bash
+# Build for production
 npm run build
+
+# Package for distribution
+npm run electron:pack
 ```
 
-### Testing
-```bash
-npm test
-```
-
-### Linting
-```bash
-npm run lint
-```
-
-## 📦 Dependencies
-
-### Core Dependencies
-- **Electron**: Desktop application framework
-- **@tonejs/midi**: MIDI processing
-- **meyda**: Audio feature extraction
-- **web-audio-api**: Audio processing
-
-### Development Dependencies
-- **Electron**: Latest version
-- **Node.js**: v16+
-
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
-## 📝 License
+## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-- **Electron** for the desktop framework
-- **Tone.js** for MIDI processing
-- **Meyda** for audio analysis
-- **OpenAI** for AI capabilities
-
-## 📞 Support
-
-If you encounter any issues or have questions:
-
-1. Check the [Issues](https://github.com/yourusername/ai-music-assistant/issues) page
-2. Create a new issue with detailed information
-3. Include your system information and error logs
-
-## 🔮 Roadmap
-
-- [ ] Real-time audio processing
-- [ ] Advanced AI model integration
-- [ ] Cloud synchronization
-- [ ] Plugin system
-- [ ] Mobile companion app
-- [ ] Advanced MIDI editing
-- [ ] Collaborative features
-
----
-
-**Made with ❤️ for musicians and AI enthusiasts**
+- **Basic Pitch**: Audio-to-MIDI conversion
+- **Meyda.js**: Audio feature extraction
+- **@tonejs/midi**: MIDI file handling
+- **LanceDB**: Vector database
+- **Electron**: Desktop app framework
+- **Svelte**: Frontend framework

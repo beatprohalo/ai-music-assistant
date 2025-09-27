@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval';">
+    <title>Settings Test</title>
+    <style>
+        body { 
+            background: #1a1a1a; 
+            color: white; 
+            padding: 20px; 
+            font-family: Arial, sans-serif; 
+        }
+        button { 
+            padding: 15px 30px; 
+            margin: 10px; 
+            background: #00ff00; 
+            color: black; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 16px;
+        }
+        button:hover {
+            background: #00cc00;
+        }
+        #output { 
+            margin-top: 20px; 
+            padding: 15px; 
+            background: #333; 
+            border-radius: 5px; 
+            min-height: 200px;
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .info { color: #00ffff; }
+    </style>
+</head>
+<body>
+    <h1>Settings Page Test</h1>
+    <button id="upload-files-btn">📁 UPLOAD FILES</button>
+    <button id="scan-folder-btn">📂 SCAN FOLDER</button>
+    <div id="output"></div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        function output(message, type = 'info') {
+            const output = document.getElementById('output');
+            const timestamp = new Date().toLocaleTimeString();
+            output.innerHTML += `<div class="${type}">${timestamp}: ${message}</div>`;
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            output('Settings test page loaded', 'success');
+            
+            const uploadFilesBtn = document.getElementById('upload-files-btn');
+            const scanFolderBtn = document.getElementById('scan-folder-btn');
+            
+            output(`Upload button found: ${uploadFilesBtn ? 'YES' : 'NO'}`, uploadFilesBtn ? 'success' : 'error');
+            output(`Scan folder button found: ${scanFolderBtn ? 'YES' : 'NO'}`, scanFolderBtn ? 'success' : 'error');
+            
+            if (uploadFilesBtn) {
+                uploadFilesBtn.addEventListener('click', async () => {
+                    try {
+                        output('Upload files button clicked', 'info');
+                        const files = await ipcRenderer.invoke('open-file-dialog');
+                        if (files && files.length > 0) {
+                            output(`SUCCESS: ${files.length} files selected`, 'success');
+                        } else {
+                            output('No files selected', 'info');
+                        }
+                    } catch (error) {
+                        output(`ERROR: ${error.message}`, 'error');
+                    }
+                });
+            }
+            
+            if (scanFolderBtn) {
+                scanFolderBtn.addEventListener('click', async () => {
+                    try {
+                        output('Scan folder button clicked', 'info');
+                        const folder = await ipcRenderer.invoke('open-folder-dialog');
+                        if (folder) {
+                            output(`SUCCESS: Folder selected: ${folder}`, 'success');
+                        } else {
+                            output('No folder selected', 'info');
+                        }
+                    } catch (error) {
+                        output(`ERROR: ${error.message}`, 'error');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

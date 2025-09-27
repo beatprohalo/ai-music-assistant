@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test Upload</title>
+    <style>
+        body { background: #1a1a1a; color: white; padding: 20px; font-family: Arial, sans-serif; }
+        button { padding: 15px 30px; margin: 10px; background: #00ff00; color: black; border: none; border-radius: 5px; cursor: pointer; }
+        #output { margin-top: 20px; padding: 15px; background: #333; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>File Upload Test</h1>
+    <button id="test-upload">Test Upload Files</button>
+    <button id="test-folder">Test Scan Folder</button>
+    <div id="output"></div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        function output(message) {
+            document.getElementById('output').innerHTML += `<div>${new Date().toLocaleTimeString()}: ${message}</div>`;
+        }
+        
+        document.getElementById('test-upload').addEventListener('click', async () => {
+            try {
+                output('Testing file upload...');
+                const files = await ipcRenderer.invoke('open-file-dialog');
+                output(`Result: ${files ? files.length : 0} files selected`);
+                if (files && files.length > 0) {
+                    output(`Files: ${files.join(', ')}`);
+                }
+            } catch (error) {
+                output(`Error: ${error.message}`);
+            }
+        });
+        
+        document.getElementById('test-folder').addEventListener('click', async () => {
+            try {
+                output('Testing folder scan...');
+                const folder = await ipcRenderer.invoke('open-folder-dialog');
+                output(`Result: ${folder || 'No folder selected'}`);
+            } catch (error) {
+                output(`Error: ${error.message}`);
+            }
+        });
+        
+        output('Test page loaded');
+    </script>
+</body>
+</html>
