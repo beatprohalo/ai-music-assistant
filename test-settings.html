@@ -43,7 +43,7 @@
     <div id="output"></div>
 
     <script>
-        const { ipcRenderer } = require('electron');
+        const ipcRenderer = window.ipcRenderer;
         
         function output(message, type = 'info') {
             const output = document.getElementById('output');

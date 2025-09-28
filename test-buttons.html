@@ -44,7 +44,7 @@
     <div id="output"></div>
 
     <script>
-        const { ipcRenderer } = require('electron');
+        const ipcRenderer = window.ipcRenderer;
         
         function output(message, type = 'info') {
             const output = document.getElementById('output');
@@ -54,13 +54,14 @@
         }
         
         // Test IPC connection
-        document.getElementById('test-ipc').addEventListener('click', () => {
+        document.getElementById('test-ipc').addEventListener('click', async () => {
             output('Testing IPC connection...', 'info');
             try {
-                if (ipcRenderer) {
-                    output('IPC Renderer is available', 'success');
+                const result = await ipcRenderer.invoke('test-ipc');
+                if (result && result.success) {
+                    output(`SUCCESS: ${result.message}`, 'success');
                 } else {
-                    output('IPC Renderer is NOT available', 'error');
+                    output(`ERROR: IPC test failed. Response: ${JSON.stringify(result)}`, 'error');
                 }
             } catch (error) {
                 output(`IPC Error: ${error.message}`, 'error');
