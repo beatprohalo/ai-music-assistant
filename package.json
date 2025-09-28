@@ -4,14 +4,50 @@
   "description": "AI Music Assistant - Desktop app for music analysis and generation",
   "main": "main.js",
   "scripts": {
-    "start": "./node_modules/.bin/electron ."
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
   },
+  "keywords": [
+    "music",
+    "ai",
+    "assistant",
+    "electron",
+    "desktop"
+  ],
+  "author": "AI Music Assistant",
+  "license": "MIT",
   "dependencies": {
     "@tonejs/midi": "^2.0.28",
     "meyda": "^5.6.3",
     "web-audio-api": "^0.2.2"
   },
   "devDependencies": {
-    "electron": "^38.1.2"
+    "electron": "^27.0.0",
+    "electron-builder": "^24.6.4"
+  },
+  "build": {
+    "appId": "com.aimusicassistant.simple",
+    "productName": "AI Music Assistant",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "**/*",
+      "!node_modules/**/*",
+      "!src/**/*",
+      "!build/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.music"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
   }
 }
