@@ -1,2 +1,9 @@
-// preload.js (can be empty for now if contextIsolation is false)
-// This file is required by Electron but can be minimal when contextIsolation is false
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('ipcRenderer', {
+  invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
+  on: (channel, listener) => {
+    // A wrapper is used to avoid exposing the full `event` object
+    ipcRenderer.on(channel, (event, ...args) => listener(...args));
+  }
+});

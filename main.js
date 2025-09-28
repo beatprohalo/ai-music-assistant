@@ -11,8 +11,9 @@ function createWindow() {
         minHeight: 700,
         frame: false,
         webPreferences: {
+            preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: true,
-            contextIsolation: false
+            contextIsolation: true
         }
     });
 
@@ -91,8 +92,9 @@ app.whenReady().then(() => {
             minHeight: 700,
             frame: false,
             webPreferences: {
+                preload: path.join(__dirname, 'preload.js'),
                 nodeIntegration: true,
-                contextIsolation: false,
+                contextIsolation: true,
             }
         });
 
@@ -109,8 +111,9 @@ app.whenReady().then(() => {
             minHeight: 700,
             frame: false,
             webPreferences: {
+                preload: path.join(__dirname, 'preload.js'),
                 nodeIntegration: true,
-                contextIsolation: false,
+                contextIsolation: true,
             }
         });
 

@@ -1,7 +1,7 @@
 // renderer.js
 const path = require('path');
 const fs = require('fs');
-const { ipcRenderer } = require('electron');
+const ipcRenderer = window.ipcRenderer;
 const mlEngine = require('./ml-engine');
 const llmOrchestrator = require('./llm-orchestrator');
 const midiAnalyzer = require('./midi-analyzer');
