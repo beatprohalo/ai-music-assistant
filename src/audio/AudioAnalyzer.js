@@ -134,7 +134,7 @@ class AudioAnalyzer {
       averagePitch: pitches.reduce((a, b) => a + b, 0) / pitches.length,
       averageVelocity: velocities.reduce((a, b) => a + b, 0) / velocities.length,
       averageDuration: durations.reduce((a, b) => a + b, 0) / durations.length,
-      noteDensity: allNotes.length / midiData.duration,
+      noteDensity: midiData.duration > 0 ? allNotes.length / midiData.duration : 0,
       pitchVariation: this.calculatePitchVariation(pitches),
       velocityVariation: this.calculateVelocityVariation(velocities),
       rhythmComplexity: this.calculateRhythmComplexity(startTimes),
