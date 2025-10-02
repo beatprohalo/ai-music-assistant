@@ -8,6 +8,9 @@ const midiAnalyzer = {
     analyze: (filePath) => electronAPI.analyzeMidiFile(filePath)
 };
 
+// IPC renderer exposed from preload.js
+const ipcRenderer = window.ipcRenderer;
+
 const llmOrchestrator = {
     runPrompt: (prompt) => electronAPI.invoke('llm-run', { prompt }),
     summarize: (text) => electronAPI.invoke('llm-summarize', { text })
@@ -1180,6 +1183,10 @@ function initializeUI() {
     const generateHumanizeBtn = document.querySelector('.generate-humanize');
     const generateMidiBtn = document.querySelector('.generate-midi');
     const generateBothBtn = document.querySelector('.generate-both');
+
+    if (generateHumanizeBtn) generateHumanizeBtn.addEventListener('click', () => handleGeneration('humanize'));
+    if (generateMidiBtn) generateMidiBtn.addEventListener('click', () => handleGeneration('midi'));
+    if (generateBothBtn) generateBothBtn.addEventListener('click', () => handleGeneration('both'));
     
     console.log('Generation buttons found:', {
         humanize: generateHumanizeBtn,
@@ -1207,7 +1214,16 @@ function initializeUI() {
             await handleGeneration('both');
         });
     }
-    // Status elements removed - no longer needed
+
+    const testUploadBtn = document.getElementById('test-upload-btn');
+    if (testUploadBtn) {
+        testUploadBtn.addEventListener('click', () => ipcRenderer.invoke('open-test-window'));
+    }
+
+    const testSettingsBtn = document.getElementById('test-settings-btn');
+    if (testSettingsBtn) {
+        testSettingsBtn.addEventListener('click', () => ipcRenderer.invoke('open-settings-test-window'));
+    }
 }
 
 function updateLibraryDisplay() {
