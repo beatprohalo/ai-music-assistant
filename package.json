@@ -1,14 +1,26 @@
 {
-  "name": "ai-music-assistant",
+  "name": "ml-bank",
   "version": "1.0.0",
-  "description": "AI Music Assistant - Desktop app for music analysis and generation",
+  "description": "ML BANK - Desktop app for music analysis and generation",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
     "build": "electron-builder",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux",
     "pack": "electron-builder --dir",
-    "dist": "electron-builder"
+    "pack:mac": "electron-builder --mac --dir",
+    "pack:win": "electron-builder --win --dir",
+    "pack:linux": "electron-builder --linux --dir",
+    "dist": "electron-builder",
+    "dist:mac": "electron-builder --mac",
+    "dist:win": "electron-builder --win",
+    "dist:linux": "electron-builder --linux",
+    "clean": "rm -rf dist",
+    "prebuild": "npm run clean",
+    "postbuild": "echo 'Build completed! Check the dist/ folder for your packaged app.'"
   },
   "keywords": [
     "music",
@@ -17,37 +29,100 @@
     "electron",
     "desktop"
   ],
-  "author": "AI Music Assistant",
+  "author": {
+    "name": "ML BANK",
+    "email": "contact@mlbank.app"
+  },
   "license": "MIT",
   "dependencies": {
     "@tonejs/midi": "^2.0.28",
     "meyda": "^5.6.3",
-    "web-audio-api": "^0.2.2"
+    "web-audio-api": "^0.2.2",
+    "openai": "^4.20.1",
+    "@anthropic-ai/sdk": "^0.17.1",
+    "@google/generative-ai": "^0.2.1"
   },
   "devDependencies": {
     "electron": "^27.0.0",
     "electron-builder": "^24.6.4"
   },
   "build": {
-    "appId": "com.aimusicassistant.simple",
-    "productName": "AI Music Assistant",
+    "appId": "com.mlbank.app",
+    "productName": "ML BANK",
     "directories": {
-      "output": "dist"
+      "output": "dist",
+      "buildResources": "build"
     },
     "files": [
       "**/*",
-      "!node_modules/**/*",
       "!src/**/*",
-      "!build/**/*"
+      "!build/**/*",
+      "!dist/**/*",
+      "!test-*.html",
+      "!test-*.js",
+      "!*.md",
+      "!install.sh",
+      "!vite.config.js",
+      "!tailwind.config.js",
+      "!postcss.config.js"
+    ],
+    "extraResources": [
+      {
+        "from": "HumanizerAI",
+        "to": "HumanizerAI",
+        "filter": ["**/*"]
+      }
     ],
     "mac": {
-      "category": "public.app-category.music"
+      "category": "public.app-category.music",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "icon": "build/icon.icns",
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist"
     },
     "win": {
-      "target": "nsis"
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64", "ia32"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ]
     },
     "linux": {
-      "target": "AppImage"
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        },
+        {
+          "target": "deb",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "AudioVideo"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "dmg": {
+      "title": "ML-BANK"
     }
   }
 }

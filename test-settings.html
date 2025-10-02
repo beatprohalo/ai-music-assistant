@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval';">
     <title>Settings Test</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
     <style>
         body { 
             background: #1a1a1a; 
@@ -43,29 +44,40 @@
     <div id="output"></div>
 
     <script>
-        const ipcRenderer = window.ipcRenderer;
-        
+        // Check if electronAPI is already available, if not assign it
+        if (typeof electronAPI === 'undefined') {
+            var electronAPI = window.electronAPI;
+        }
+
+        // Test settings functionality
         function output(message, type = 'info') {
             const output = document.getElementById('output');
             const timestamp = new Date().toLocaleTimeString();
             output.innerHTML += `<div class="${type}">${timestamp}: ${message}</div>`;
             output.scrollTop = output.scrollHeight;
         }
-        
+
         document.addEventListener('DOMContentLoaded', () => {
             output('Settings test page loaded', 'success');
-            
+
+            // Debug electronAPI availability
+            output(`window.electronAPI available: ${window.electronAPI ? 'YES' : 'NO'}`, window.electronAPI ? 'success' : 'error');
+            if (window.electronAPI) {
+                output(`openFileDialog method: ${typeof window.electronAPI.openFileDialog}`, 'info');
+                output(`openFolderDialog method: ${typeof window.electronAPI.openFolderDialog}`, 'info');
+            }
+
             const uploadFilesBtn = document.getElementById('upload-files-btn');
             const scanFolderBtn = document.getElementById('scan-folder-btn');
-            
+
             output(`Upload button found: ${uploadFilesBtn ? 'YES' : 'NO'}`, uploadFilesBtn ? 'success' : 'error');
             output(`Scan folder button found: ${scanFolderBtn ? 'YES' : 'NO'}`, scanFolderBtn ? 'success' : 'error');
-            
+
             if (uploadFilesBtn) {
                 uploadFilesBtn.addEventListener('click', async () => {
                     try {
                         output('Upload files button clicked', 'info');
-                        const files = await ipcRenderer.invoke('open-file-dialog');
+                        const files = await electronAPI.openFileDialog();
                         if (files && files.length > 0) {
                             output(`SUCCESS: ${files.length} files selected`, 'success');
                         } else {
@@ -81,7 +93,7 @@
                 scanFolderBtn.addEventListener('click', async () => {
                     try {
                         output('Scan folder button clicked', 'info');
-                        const folder = await ipcRenderer.invoke('open-folder-dialog');
+                        const folder = await electronAPI.openFolderDialog();
                         if (folder) {
                             output(`SUCCESS: Folder selected: ${folder}`, 'success');
                         } else {

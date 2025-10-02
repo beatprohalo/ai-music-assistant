@@ -19,10 +19,12 @@
   ],
   "author": "AI Music Assistant",
   "license": "MIT",
-  "devDependencies": {
-    "electron": "^27.0.0",
-    "electron-builder": "^24.6.4"
+  "dependencies": {
+    "@tonejs/midi": "^2.0.28",
+    "meyda": "^5.6.3",
+    "web-audio-api": "^0.2.2"
   },
+  "devDependencies": {
   "build": {
     "appId": "com.aimusicassistant.simple",
     "productName": "AI Music Assistant",

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval';">
     <title>Button Test</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
     <style>
         body { 
             background: #1a1a1a; 
@@ -40,12 +41,17 @@
     <h1>Upload Button Test</h1>
     <button id="test-upload">Test Upload Files</button>
     <button id="test-folder">Test Scan Folder</button>
+    <button id="test-safe-scan">Test Safe Folder Scan</button>
     <button id="test-ipc">Test IPC Connection</button>
     <div id="output"></div>
 
     <script>
-        const ipcRenderer = window.ipcRenderer;
-        
+        // Check if electronAPI is already available, if not assign it
+        if (typeof electronAPI === 'undefined') {
+            var electronAPI = window.electronAPI;
+        }
+
+        // Test IPC communication
         function output(message, type = 'info') {
             const output = document.getElementById('output');
             const timestamp = new Date().toLocaleTimeString();
@@ -57,7 +63,7 @@
         document.getElementById('test-ipc').addEventListener('click', async () => {
             output('Testing IPC connection...', 'info');
             try {
-                const result = await ipcRenderer.invoke('test-ipc');
+                const result = await electronAPI.testIPC();
                 if (result && result.success) {
                     output(`SUCCESS: ${result.message}`, 'success');
                 } else {
@@ -72,7 +78,7 @@
         document.getElementById('test-upload').addEventListener('click', async () => {
             try {
                 output('Testing file upload...', 'info');
-                const files = await ipcRenderer.invoke('open-file-dialog');
+                const files = await electronAPI.openFileDialog();
                 if (files && files.length > 0) {
                     output(`SUCCESS: ${files.length} files selected`, 'success');
                     files.forEach((file, index) => {
@@ -90,7 +96,7 @@
         document.getElementById('test-folder').addEventListener('click', async () => {
             try {
                 output('Testing folder scan...', 'info');
-                const folder = await ipcRenderer.invoke('open-folder-dialog');
+                const folder = await electronAPI.openFolderDialog();
                 if (folder) {
                     output(`SUCCESS: Folder selected: ${folder}`, 'success');
                 } else {
@@ -100,6 +106,43 @@
                 output(`ERROR: ${error.message}`, 'error');
             }
         });
+
+        // Test safe folder scan
+        document.getElementById('test-safe-scan').addEventListener('click', async () => {
+            try {
+                output('Testing safe folder scan...', 'info');
+                const folder = await electronAPI.openFolderDialog();
+                if (folder && folder.length > 0) {
+                    const folderPath = Array.isArray(folder) ? folder[0] : folder;
+                    output(`Selected folder: ${folderPath}`, 'info');
+                    output('Starting safe folder scan...', 'info');
+
+                    const startTime = Date.now();
+                    const files = await electronAPI.scanFolderSafe(folderPath);
+                    const endTime = Date.now();
+
+                    output(`SUCCESS: Safe scan completed in ${endTime - startTime}ms`, 'success');
+                    output(`Found ${files.length} audio/MIDI files:`, 'success');
+
+                    // Show first 10 files as examples
+                    const filesToShow = files.slice(0, 10);
+                    filesToShow.forEach((file, index) => {
+                        output(`  ${index + 1}. ${file}`, 'info');
+                    });
+
+                    if (files.length > 10) {
+                        output(`  ... and ${files.length - 10} more files`, 'info');
+                    }
+                } else {
+                    output('No folder selected', 'info');
+                }
+            } catch (error) {
+                output(`ERROR: ${error.message}`, 'error');
+                console.error('Safe folder scan error:', error);
+            }
+        });
+
+        output('Button test page loaded', 'success');
         
         output('Button test page loaded', 'success');
     </script>

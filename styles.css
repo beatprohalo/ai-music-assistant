@@ -25,44 +25,45 @@ body {
 }
 
 #app-container {
-    width: 95vw;
-    height: 95vh;
-    max-width: 1400px;
-    max-height: 900px;
-    background: linear-gradient(145deg, #1a1a1a, #0d0d0d);
-    border-radius: 20px;
+    width: 98vw;
+    height: 98vh;
+    max-width: 1600px;
+    max-height: 1000px;
+    background: linear-gradient(145deg, #0f0f0f, #1a1a1a);
+    border-radius: 12px;
     box-shadow: 
-        0 20px 40px rgba(0, 0, 0, 0.8),
-        inset 0 0 20px rgba(255, 255, 255, 0.05),
-        0 0 50px rgba(0, 255, 255, 0.1);
+        0 8px 32px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        0 0 0 1px rgba(0, 255, 255, 0.2);
     display: flex;
     flex-direction: column;
-    border: 3px solid var(--color-accent-silver);
+    border: 1px solid rgba(0, 255, 255, 0.3);
     position: relative;
-    padding: 25px;
+    padding: 20px;
     box-sizing: border-box;
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(20px);
+    -webkit-app-region: drag; /* Make the entire app container draggable */
 }
 
 /* Modern inner frame */
 #app-container::before {
     content: '';
     position: absolute;
-    top: 15px;
-    left: 15px;
-    right: 15px;
-    bottom: 15px;
-    border: 2px solid;
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    border: 1px solid;
     border-image: linear-gradient(45deg, 
-        rgba(0, 255, 255, 0.3) 0%,
-        rgba(0, 255, 0, 0.3) 50%,
-        rgba(0, 255, 255, 0.3) 100%) 1;
+        rgba(0, 255, 255, 0.2) 0%,
+        rgba(0, 255, 0, 0.2) 50%,
+        rgba(0, 255, 255, 0.2) 100%) 1;
     border-image-slice: 1;
-    border-radius: 15px;
+    border-radius: 8px;
     pointer-events: none;
     box-shadow: 
-        inset 0 0 20px rgba(0, 255, 255, 0.1),
-        0 0 30px rgba(0, 255, 255, 0.05);
+        inset 0 0 10px rgba(0, 255, 255, 0.05),
+        0 0 20px rgba(0, 255, 255, 0.02);
 }
 
 h1 {
@@ -76,19 +77,20 @@ h1 {
 /* Main panels layout */
 #main-panels {
     display: flex;
-    gap: 25px;
+    gap: 16px;
     height: 100%;
     position: relative;
     z-index: 2;
     padding: 0;
     flex: 1;
+    -webkit-app-region: drag; /* Make the main panels area draggable */
 }
 
 #left-panel {
-    flex: 2;
+    flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
     min-width: 0;
 }
 
@@ -110,16 +112,17 @@ h1 {
 /* Control panels */
 #control-panel {
     flex-grow: 1;
-    background: linear-gradient(135deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.3));
-    border-radius: 12px;
-    border: 1px solid rgba(0, 255, 255, 0.2);
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2));
+    border-radius: 8px;
+    border: 1px solid rgba(0, 255, 255, 0.15);
     box-shadow: 
-        inset 0 0 10px rgba(0, 255, 255, 0.1),
-        0 0 20px rgba(0, 0, 0, 0.5);
-    padding: 20px;
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 4px 16px rgba(0, 0, 0, 0.3);
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    backdrop-filter: blur(5px);
+    backdrop-filter: blur(10px);
+    -webkit-app-region: no-drag; /* Control panel should not be draggable */
 }
 
 #file-management {
@@ -131,19 +134,20 @@ h1 {
 .control-group {
     display: flex;
     align-items: center;
-    margin-bottom: 10px;
-    gap: 10px;
+    margin-bottom: 8px;
+    gap: 8px;
 }
 
 .control-group:last-of-type {
-    margin-bottom: 20px;
+    margin-bottom: 16px;
 }
 
 .control-label {
     color: var(--color-accent-silver);
-    font-size: 0.9em;
-    width: 120px; /* Fixed width for labels */
+    font-size: 0.8em;
+    width: 100px; /* Fixed width for labels */
     flex-shrink: 0;
+    font-weight: 500;
 }
 
 /* Toggle Switch styles */
@@ -213,6 +217,7 @@ input:checked + .slider:before {
     -webkit-appearance: none; /* Remove default browser styling for select */
     -moz-appearance: none;
     appearance: none;
+    -webkit-app-region: no-drag; /* Prevent inputs from being draggable */
 }
 
 .styled-input:focus, .styled-select:focus {
@@ -242,34 +247,70 @@ input:checked + .slider:before {
     display: flex;
     justify-content: space-around;
     margin-top: auto; /* Push buttons to the bottom */
-    padding-top: 15px;
-    gap: 10px;
+    padding-top: 12px;
+    gap: 8px;
 }
 
 .neon-button {
-    background-color: #222;
+    background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
     color: var(--color-text-light);
-    border: 2px solid #00FF00; /* Neon green border */
-    border-radius: 8px;
-    padding: 10px 15px;
-    font-size: 0.9em;
+    border: 1px solid rgba(0, 255, 0, 0.4);
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 0.85em;
     cursor: pointer;
     outline: none;
-    box-shadow: 0 0 10px rgba(0, 255, 0, 0.4), inset 0 0 5px rgba(0, 255, 0, 0.2);
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     transition: all 0.2s ease-in-out;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+    font-weight: 500;
+    -webkit-app-region: no-drag; /* Prevent buttons from being draggable */
 }
 
 .neon-button:hover {
-    background-color: rgba(0, 255, 0, 0.1);
-    box-shadow: 0 0 15px rgba(0, 255, 0, 0.7), inset 0 0 8px rgba(0, 255, 0, 0.4);
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+    border-color: rgba(0, 255, 0, 0.6);
+    box-shadow: 
+        0 4px 12px rgba(0, 255, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
     color: #00FF00;
+    transform: translateY(-1px);
 }
 
 .neon-button:active {
-    box-shadow: 0 0 5px rgba(0, 255, 0, 0.3), inset 0 0 3px rgba(0, 255, 0, 0.1);
-    transform: translateY(1px);
+    transform: translateY(0);
+    box-shadow: 
+        0 1px 4px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Danger button styles */
+.danger-button {
+    border: 1px solid rgba(255, 68, 68, 0.4);
+    color: #ff6666;
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.danger-button:hover {
+    background: linear-gradient(145deg, #2a1a1a, #1a0f0f);
+    border-color: rgba(255, 68, 68, 0.6);
+    box-shadow: 
+        0 4px 12px rgba(255, 68, 68, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    color: #ff8888;
+    transform: translateY(-1px);
+}
+
+.danger-button:active {
+    transform: translateY(0);
+    box-shadow: 
+        0 1px 4px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 /* File Management Styles */
@@ -436,52 +477,65 @@ input:checked + .slider:before {
     background: linear-gradient(135deg, #000000, #0a0a0a);
     color: var(--color-oled-text);
     font-family: var(--font-mono-oled);
-    font-size: 1.1em;
-    padding: 20px;
-    border-radius: 10px;
-    border: 2px solid rgba(0, 255, 0, 0.4);
+    font-size: 0.95em;
+    padding: 16px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 255, 0, 0.3);
     box-shadow: 
-        inset 0 0 15px rgba(0, 255, 0, 0.3),
-        0 0 20px rgba(0, 255, 0, 0.2),
-        inset 0 0 30px rgba(0, 0, 0, 0.8);
-    text-shadow: 0 0 8px var(--color-oled-text);
-    line-height: 1.5;
+        inset 0 0 8px rgba(0, 255, 0, 0.2),
+        0 0 12px rgba(0, 255, 0, 0.1),
+        inset 0 0 20px rgba(0, 0, 0, 0.9);
+    text-shadow: 0 0 4px var(--color-oled-text);
+    line-height: 1.4;
     white-space: pre;
     margin: 0;
-    min-height: 200px;
-    max-height: 300px;
+    min-height: 180px;
+    max-height: 280px;
     overflow-y: auto;
     backdrop-filter: blur(2px);
+    -webkit-app-region: drag; /* Make the OLED display draggable */
+    cursor: move; /* Show move cursor when hovering over draggable area */
 }
 
 /* Header Controls */
 #header-controls {
     display: flex;
     justify-content: flex-end;
-    padding: 10px 20px;
-    border-bottom: 1px solid rgba(192, 192, 192, 0.2);
-    margin-bottom: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(192, 192, 192, 0.15);
+    margin-bottom: 8px;
+    gap: 8px;
+    -webkit-app-region: no-drag; /* Header buttons should not be draggable */
+    user-select: none; /* Prevent text selection while dragging */
 }
 
 .toggle-button {
-    background-color: #222;
+    background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
     color: var(--color-text-light);
-    border: 2px solid #00FFFF;
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-size: 0.9em;
+    border: 1px solid rgba(0, 255, 255, 0.3);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.8em;
     cursor: pointer;
     outline: none;
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.4), inset 0 0 5px rgba(0, 255, 255, 0.2);
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     transition: all 0.2s ease-in-out;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
+    font-weight: 500;
+    -webkit-app-region: no-drag; /* Prevent buttons from being draggable */
 }
 
 .toggle-button:hover {
-    background-color: rgba(0, 255, 255, 0.1);
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.7), inset 0 0 8px rgba(0, 255, 255, 0.4);
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+    border-color: rgba(0, 255, 255, 0.5);
+    box-shadow: 
+        0 4px 12px rgba(0, 255, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
     color: #00FFFF;
+    transform: translateY(-1px);
 }
 
 /* Bigger Prompt Input */
@@ -490,23 +544,94 @@ input:checked + .slider:before {
     align-items: stretch;
 }
 
-.styled-textarea {
-    background-color: rgba(0, 0, 0, 0.6);
-    border: 1px solid var(--color-accent-silver);
-    border-radius: 5px;
+/* Query Input Styles */
+.query-group {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.query-input-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.query-input {
+    flex: 1;
+    background: linear-gradient(145deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2));
+    border: 1px solid rgba(192, 192, 192, 0.2);
+    border-radius: 6px;
     color: var(--color-text-light);
-    padding: 12px;
-    font-size: 0.95em;
+    padding: 6px 10px;
+    font-size: 0.85em;
     outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    transition: all 0.2s ease;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.query-input:focus {
+    border-color: rgba(0, 255, 255, 0.5);
+    box-shadow: 
+        0 0 8px rgba(0, 255, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    background: linear-gradient(145deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.3));
+}
+
+.query-input::placeholder {
+    color: rgba(224, 224, 224, 0.5);
+}
+
+.query-button {
+    background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
+    color: var(--color-text-light);
+    border: 1px solid rgba(0, 255, 0, 0.4);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.75em;
+    cursor: pointer;
+    outline: none;
+    box-shadow: 
+        0 2px 8px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease-in-out;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    font-weight: 500;
+}
+
+.query-button:hover {
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+    border-color: rgba(0, 255, 0, 0.6);
+    box-shadow: 
+        0 4px 12px rgba(0, 255, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    color: #00FF00;
+    transform: translateY(-1px);
+}
+
+.styled-textarea {
+    background: linear-gradient(145deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2));
+    border: 1px solid rgba(192, 192, 192, 0.2);
+    border-radius: 6px;
+    color: var(--color-text-light);
+    padding: 10px;
+    font-size: 0.9em;
+    outline: none;
+    transition: all 0.2s ease;
     resize: vertical;
-    min-height: 120px;
+    min-height: 100px;
     font-family: inherit;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    -webkit-app-region: no-drag; /* Prevent textarea from being draggable */
 }
 
 .styled-textarea:focus {
-    border-color: #00FFFF;
-    box-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+    border-color: rgba(0, 255, 255, 0.5);
+    box-shadow: 
+        0 0 8px rgba(0, 255, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    background: linear-gradient(145deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.3));
 }
 
 .styled-textarea::placeholder {
@@ -1166,4 +1291,178 @@ button:active {
     font-weight: bold;
     color: #00ffff;
     font-size: 1.1em;
+}
+
+/* Status Prompt Interface */
+.status-prompt-container {
+    background: linear-gradient(145deg, #0a0a0a, #1a1a1a);
+    border: 2px solid var(--color-accent-silver);
+    border-radius: 10px;
+    padding: 20px;
+    margin: 15px 0;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+}
+
+.status-prompt-header h3 {
+    color: var(--color-accent-silver);
+    margin: 0 0 15px 0;
+    font-size: 1.1em;
+    text-align: center;
+    text-shadow: 0 0 10px rgba(192, 192, 192, 0.5);
+}
+
+.status-prompt-input-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.status-prompt-input {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid var(--color-accent-silver);
+    border-radius: 5px;
+    padding: 10px 15px;
+    color: var(--color-text-light);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9em;
+    transition: all 0.3s ease;
+}
+
+.status-prompt-input:focus {
+    outline: none;
+    border-color: #00ffff;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+    background: rgba(0, 0, 0, 0.9);
+}
+
+.status-prompt-input::placeholder {
+    color: rgba(192, 192, 192, 0.6);
+    font-style: italic;
+}
+
+.ask-status-btn {
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+    border: 2px solid var(--color-accent-silver);
+    color: var(--color-text-light);
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.9em;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.ask-status-btn:hover {
+    background: linear-gradient(145deg, #3a3a3a, #2a2a2a);
+    border-color: #00ffff;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.ask-status-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+}
+
+.status-response {
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid rgba(192, 192, 192, 0.3);
+    border-radius: 5px;
+    padding: 15px;
+    min-height: 60px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.85em;
+    line-height: 1.4;
+}
+
+.response-text {
+    color: var(--color-text-light);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.status-response.loading .response-text {
+    color: #00ffff;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.status-response.error .response-text {
+    color: #ff6b6b;
+}
+
+.status-response.success .response-text {
+    color: #51cf66;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+}
+
+/* OLED Display Updates */
+.oled-display span {
+    color: #00ff00;
+    font-weight: bold;
+    text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+}
+
+.oled-display.updating span {
+    animation: oled-update 0.5s ease-in-out;
+}
+
+@keyframes oled-update {
+    0% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+/* Status Panel Styles */
+.status-panel {
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid #00ff00;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+}
+
+.status-response {
+    margin-top: 15px;
+    padding: 15px;
+    border: 1px solid #00ff00;
+    border-radius: 5px;
+    background: rgba(0, 255, 0, 0.1);
+    min-height: 100px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.status-response.loading {
+    border-color: #ffff00;
+    background: rgba(255, 255, 0, 0.1);
+    color: #ffff00;
+}
+
+.status-response.success {
+    border-color: #00ff00;
+    background: rgba(0, 255, 0, 0.1);
+    color: #00ff00;
+}
+
+.status-response.error {
+    border-color: #ff0000;
+    background: rgba(255, 0, 0, 0.1);
+    color: #ff0000;
+}
+
+.response-text {
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }

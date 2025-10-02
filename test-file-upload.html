@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test File Upload and Database Save</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+        .warning { color: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test File Upload and Database Save</h1>
+        <p>This page tests the file upload and database save functionality of the AI Music Assistant.</p>
+        
+        <div class="test-section">
+            <h3>1. Test Database Connection</h3>
+            <button onclick="testDatabaseConnection()">Test Database</button>
+            <div id="db-log" class="log"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>2. Test File Upload Simulation</h3>
+            <button onclick="testFileUpload()">Simulate File Upload</button>
+            <div id="upload-log" class="log"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>3. Test Database Operations</h3>
+            <button onclick="testDatabaseOperations()">Test Database Ops</button>
+            <div id="ops-log" class="log"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>4. Test System Status</h3>
+            <button onclick="testSystemStatus()">Get System Status</button>
+            <div id="status-log" class="log"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>5. Clear Database</h3>
+            <button onclick="clearDatabase()" style="background: #dc3545;">Clear Database</button>
+            <div id="clear-log" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        let logCount = 0;
+        
+        function log(elementId, message, type = 'info') {
+            const logElement = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : type === 'warning' ? 'warning' : 'info';
+            logElement.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        async function testDatabaseConnection() {
+            log('db-log', 'Testing database connection...', 'info');
+            try {
+                const result = await window.electronAPI.getSystemStatus();
+                log('db-log', `✅ Database connection successful`, 'success');
+                log('db-log', `Total files: ${result.database?.total_files || 0}`, 'info');
+                log('db-log', `Audio files: ${result.database?.audio_files || 0}`, 'info');
+                log('db-log', `MIDI files: ${result.database?.midi_files || 0}`, 'info');
+            } catch (error) {
+                log('db-log', `❌ Database connection failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testFileUpload() {
+            log('upload-log', 'Simulating file upload...', 'info');
+            try {
+                // Simulate file data that would come from file upload
+                const mockFileData = {
+                    filePath: '/test/upload/audio-test.mp3',
+                    fileName: 'audio-test.mp3',
+                    fileType: 'audio',
+                    fileSize: 2048000,
+                    category: 'test-upload',
+                    analysisData: {
+                        tempo: 128,
+                        key: 'F major',
+                        instruments: ['guitar', 'bass', 'drums'],
+                        features: {
+                            energy: 0.9,
+                            danceability: 0.8,
+                            valence: 0.7
+                        }
+                    }
+                };
+                
+                log('upload-log', `Attempting to save file: ${mockFileData.fileName}`, 'info');
+                const result = await window.electronAPI.saveFileToDatabase(mockFileData);
+                
+                if (result.success) {
+                    log('upload-log', `✅ File saved successfully with ID: ${result.fileId}`, 'success');
+                } else {
+                    log('upload-log', `❌ Failed to save file: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                log('upload-log', `❌ Upload simulation failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testDatabaseOperations() {
+            log('ops-log', 'Testing database operations...', 'info');
+            try {
+                // Test getting all files
+                log('ops-log', 'Getting all files from database...', 'info');
+                const filesResult = await window.electronAPI.getDatabaseFiles();
+                if (filesResult.success) {
+                    log('ops-log', `✅ Retrieved ${filesResult.files.length} files`, 'success');
+                    filesResult.files.forEach((file, index) => {
+                        log('ops-log', `  ${index + 1}. ${file.fileName} (${file.fileType}) - ${file.category}`, 'info');
+                    });
+                } else {
+                    log('ops-log', `❌ Failed to get files: ${filesResult.error}`, 'error');
+                }
+                
+                // Test loading database files
+                log('ops-log', 'Loading database files...', 'info');
+                const loadResult = await window.electronAPI.loadDatabaseFiles();
+                if (loadResult.success) {
+                    log('ops-log', `✅ Loaded ${loadResult.files.length} files`, 'success');
+                } else {
+                    log('ops-log', `❌ Failed to load files: ${loadResult.error}`, 'error');
+                }
+                
+            } catch (error) {
+                log('ops-log', `❌ Database operations failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testSystemStatus() {
+            log('status-log', 'Getting system status...', 'info');
+            try {
+                const status = await window.electronAPI.getSystemStatus();
+                log('status-log', '✅ System status retrieved', 'success');
+                log('status-log', `Database: ${status.database?.connected ? 'Connected' : 'Disconnected'}`, 'info');
+                log('status-log', `Total files: ${status.database?.total_files || 0}`, 'info');
+                log('status-log', `Audio files: ${status.database?.audio_files || 0}`, 'info');
+                log('status-log', `MIDI files: ${status.database?.midi_files || 0}`, 'info');
+                log('status-log', `Total size: ${status.database?.total_size_mb || 0} MB`, 'info');
+                
+                if (status.instruments) {
+                    log('status-log', `Instruments detected:`, 'info');
+                    Object.entries(status.instruments).forEach(([instrument, count]) => {
+                        if (count > 0) {
+                            log('status-log', `  ${instrument}: ${count}`, 'info');
+                        }
+                    });
+                }
+            } catch (error) {
+                log('status-log', `❌ Failed to get system status: ${error.message}`, 'error');
+            }
+        }
+        
+        async function clearDatabase() {
+            log('clear-log', 'Clearing database...', 'warning');
+            try {
+                const result = await window.electronAPI.purgeDatabase();
+                if (result.success) {
+                    log('clear-log', '✅ Database cleared successfully', 'success');
+                } else {
+                    log('clear-log', `❌ Failed to clear database: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                log('clear-log', `❌ Clear database failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Auto-run database connection test on page load
+        window.addEventListener('load', () => {
+            log('db-log', 'Page loaded, testing database connection...', 'info');
+            testDatabaseConnection();
+        });
+    </script>
+</body>
+</html>

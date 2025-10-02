@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Button Test</title>
+</head>
+<body>
+    <h1>Button Test</h1>
+    <button id="toggle-settings-btn">SETTINGS</button>
+    <button id="upload-files-btn">UPLOAD FILES</button>
+    
+    <div id="output"></div>
+    
+    <script>
+        // Test if electronAPI is available
+        console.log('electronAPI available:', typeof electronAPI !== 'undefined');
+        
+        const output = document.getElementById('output');
+        
+        // Settings button test
+        const settingsBtn = document.getElementById('toggle-settings-btn');
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', async () => {
+                output.innerHTML += '<p>Settings button clicked</p>';
+                try {
+                    await electronAPI.openSettingsWindow();
+                    output.innerHTML += '<p>Settings window opened successfully</p>';
+                } catch (error) {
+                    output.innerHTML += '<p>Settings error: ' + error.message + '</p>';
+                }
+            });
+        }
+        
+        // Upload button test
+        const uploadBtn = document.getElementById('upload-files-btn');
+        if (uploadBtn) {
+            uploadBtn.addEventListener('click', async () => {
+                output.innerHTML += '<p>Upload button clicked</p>';
+                try {
+                    const files = await electronAPI.openFileDialog();
+                    output.innerHTML += '<p>Files selected: ' + JSON.stringify(files) + '</p>';
+                } catch (error) {
+                    output.innerHTML += '<p>Upload error: ' + error.message + '</p>';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
