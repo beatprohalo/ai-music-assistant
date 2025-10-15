@@ -39,7 +39,7 @@ class MusicGenerator {
           generatedAt: new Date().toISOString()
         },
         tracks: [],
-        harmony: this.buildHarmony(analysisPatterns) // Add harmony info
+        harmony: this.buildHarmony(options.patterns) // Add harmony info
       };
 
       // Generate different tracks based on style
@@ -347,6 +347,18 @@ class MusicGenerator {
     };
 
     return keyMap[key] || keyMap['C major'];
+  }
+
+  buildHarmony(analysisPatterns) {
+    if (analysisPatterns && analysisPatterns.chords && analysisPatterns.chords.size > 0) {
+        return {
+            chord_progression: Array.from(analysisPatterns.chords)
+        };
+    }
+    // Fallback to default harmony
+    return {
+        chord_progression: ['C', 'G', 'Am', 'F']
+    };
   }
 
   getChordProgression(key, duration) {

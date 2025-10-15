@@ -232,7 +232,7 @@ async function handleGeneration(generationType, prompt) {
         }
         mainWindow.webContents.send('log-to-oled', fullLog);
 
-        if (generationType === 'midi' || generationType === 'both') {
+        if (generationType === 'midi') {
             mainWindow.webContents.send('log-to-oled', 'Attempting to generate MIDI...');
             const outputDir = path.join(userDataPath, 'HumanizerAI', 'generated');
             if (!fs.existsSync(outputDir)) {
@@ -241,6 +241,19 @@ async function handleGeneration(generationType, prompt) {
             const outputFilePath = path.join(outputDir, `generated_midi_${Date.now()}.mid`);
             const generatedPath = await midiGenerator.generateMidiFromLLMResponse(llmResponse, outputFilePath);
             mainWindow.webContents.send('log-to-oled', `MIDI generated successfully: ${path.basename(generatedPath)}`);
+            return { success: true, generatedPath: path.basename(generatedPath) };
+        }
+        if (generationType === 'both') {
+            mainWindow.webContents.send('log-to-oled', 'Attempting to generate MIDI and JSON...');
+            const outputDir = path.join(userDataPath, 'HumanizerAI', 'generated');
+            if (!fs.existsSync(outputDir)) {
+                fs.mkdirSync(outputDir, { recursive: true });
+            }
+            const midiFilePath = path.join(outputDir, `generated_midi_${Date.now()}.mid`);
+            const jsonFilePath = path.join(outputDir, `generated_midi_${Date.now()}.json`);
+            const generatedPath = await midiGenerator.generateMidiFromLLMResponse(llmResponse, midiFilePath);
+            await fsp.writeFile(jsonFilePath, JSON.stringify(llmResponse, null, 2));
+            mainWindow.webContents.send('log-to-oled', `MIDI and JSON generated successfully: ${path.basename(generatedPath)}`);
             return { success: true, generatedPath: path.basename(generatedPath) };
         }
         return { success: true };
@@ -659,13 +672,17 @@ ipcMain.handle('generate-midi', async (event, prompt, context = {}, opts = {}, s
         const MusicGenerator = require('./src/generation/MusicGenerator');
         const musicGenerator = new MusicGenerator();
         
+        // Get analysis patterns from context
+        const analysisPatterns = context.analysisPatterns || {};
+
         // Generate music with harmonic style to focus on chord progressions
         const musicResult = await musicGenerator.generateMusic(prompt, {
             style: 'harmonic',
             outputFormat: 'raw', // Use raw format to get the music structure directly
-            tempo: 120,
-            key: 'C major',
-            duration: 16
+            tempo: analysisPatterns.tempoRange ? analysisPatterns.tempoRange.avg : 120,
+            key: analysisPatterns.keys ? [...analysisPatterns.keys][0] : 'C major',
+            duration: 16,
+            patterns: analysisPatterns
         });
         
         // Extract the actual music data from the formatted result
