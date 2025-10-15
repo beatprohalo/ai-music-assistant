@@ -88,7 +88,7 @@ async function handleGeneration(generationType, prompt) {
         }
 
         const queryVector = generateQueryVector(prompt, loadedFiles);
-        const { response: llmResponse, sourceFiles } = await llmOrchestrator.generateLlmResponse(prompt, queryVector, generationType === 'humanize' ? 'humanization' : 'pattern');
+        const { response: llmResponse, sourceFiles, patterns: analysisPatterns } = await llmOrchestrator.generateLlmResponse(prompt, queryVector, generationType === 'humanize' ? 'humanization' : 'pattern');
 
         let fullLog = `LLM Response (${generationType.toUpperCase()}): ${llmResponse}`;
         if (sourceFiles && sourceFiles.length > 0) {
@@ -103,7 +103,7 @@ async function handleGeneration(generationType, prompt) {
                 fs.mkdirSync(outputDir, { recursive: true });
             }
             const outputFilePath = path.join(outputDir, `generated_midi_${Date.now()}.mid`);
-            const generatedPath = await midiGenerator.generateMidiFromLLMResponse(llmResponse, outputFilePath);
+            const generatedPath = await midiGenerator.generateMidiFromLLMResponse(llmResponse, outputFilePath, analysisPatterns);
             mainWindow.webContents.send('log-to-oled', `MIDI generated successfully: ${path.basename(generatedPath)}`);
             return { success: true, generatedPath: path.basename(generatedPath) };
         }
