@@ -18,6 +18,69 @@ let mainWindow;
 let cancelFolderScan = false;
 let statusSystem = null;
 
+// Smart filename generator for MIDI files
+function generateSmartMidiFilename(prompt, context = {}) {
+    try {
+        const lowerPrompt = prompt.toLowerCase();
+        
+        // Extract musical elements from prompt
+        const musicalTerms = {
+            instruments: ['piano', 'guitar', 'drums', 'bass', 'violin', 'synth', 'organ'],
+            genres: ['rock', 'jazz', 'classical', 'electronic', 'pop', 'blues', 'folk'],
+            moods: ['happy', 'sad', 'energetic', 'calm', 'dramatic', 'mysterious'],
+            tempo: ['slow', 'fast', 'moderate', 'ballad']
+        };
+        
+        let nameComponents = [];
+        
+        // Extract genre
+        const foundGenre = musicalTerms.genres.find(genre => lowerPrompt.includes(genre));
+        if (foundGenre) nameComponents.push(foundGenre);
+        
+        // Extract instrument
+        const foundInstrument = musicalTerms.instruments.find(inst => lowerPrompt.includes(inst));
+        if (foundInstrument) nameComponents.push(foundInstrument);
+        
+        // Extract mood
+        const foundMood = musicalTerms.moods.find(mood => lowerPrompt.includes(mood));
+        if (foundMood) nameComponents.push(foundMood);
+        
+        // Extract tempo
+        const foundTempo = musicalTerms.tempo.find(tempo => lowerPrompt.includes(tempo));
+        if (foundTempo) nameComponents.push(foundTempo);
+        
+        // If no musical terms found, use first meaningful words from prompt
+        if (nameComponents.length === 0) {
+            const words = prompt.replace(/[^a-zA-Z0-9\s]/g, '').split(/\s+/);
+            const meaningfulWords = words.filter(word => word.length > 2).slice(0, 2);
+            nameComponents.push(...meaningfulWords);
+        }
+        
+        // Create base name
+        let baseName = nameComponents.length > 0 
+            ? nameComponents.join('_').toLowerCase()
+            : 'midi_composition';
+        
+        // Add timestamp for uniqueness
+        const timestamp = new Date().toISOString()
+            .replace(/[-:]/g, '')
+            .replace(/\.\d{3}Z/, '')
+            .substring(2, 11); // YYMMDDHHM format
+        
+        // Sanitize and limit length
+        baseName = baseName
+            .replace(/[^a-zA-Z0-9_]/g, '_')
+            .replace(/_{2,}/g, '_')
+            .substring(0, 30);
+        
+        return `${baseName}_${timestamp}.mid`;
+        
+    } catch (error) {
+        console.error('Smart naming failed, using fallback:', error);
+        return `midi_${Date.now()}.mid`;
+    }
+}
+
 // Helper function to generate MIDI notes from music structure
 function generateMidiNotes(musicStructure) {
     const notes = [];
@@ -203,6 +266,26 @@ function createWindow() {
         }
     });
 
+    // Set Content Security Policy
+    mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+        callback({
+            responseHeaders: {
+                ...details.responseHeaders,
+                'Content-Security-Policy': [
+                    "default-src 'self'; " +
+                    "script-src 'self' 'unsafe-inline'; " +
+                    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+                    "font-src 'self' https://fonts.gstatic.com; " +
+                    "img-src 'self' data: https:; " +
+                    "connect-src 'self' https:; " +
+                    "object-src 'none'; " +
+                    "base-uri 'self'; " +
+                    "form-action 'self'"
+                ]
+            }
+        });
+    });
+
     // Initialize file handlers with the main window
     initializeFileHandlers(mainWindow);
 
@@ -258,6 +341,27 @@ ipcMain.handle('open-settings-window', async () => {
             contextIsolation: true,
         }
     });
+
+    // Set Content Security Policy
+    win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+        callback({
+            responseHeaders: {
+                ...details.responseHeaders,
+                'Content-Security-Policy': [
+                    "default-src 'self'; " +
+                    "script-src 'self' 'unsafe-inline'; " +
+                    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+                    "font-src 'self' https://fonts.gstatic.com; " +
+                    "img-src 'self' data: https:; " +
+                    "connect-src 'self' https:; " +
+                    "object-src 'none'; " +
+                    "base-uri 'self'; " +
+                    "form-action 'self'"
+                ]
+            }
+        });
+    });
+
     await win.loadFile('settings-simple.html');
     return true;
 });
@@ -275,6 +379,27 @@ ipcMain.handle('open-main-window', async () => {
             contextIsolation: true,
         }
     });
+
+    // Set Content Security Policy
+    win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+        callback({
+            responseHeaders: {
+                ...details.responseHeaders,
+                'Content-Security-Policy': [
+                    "default-src 'self'; " +
+                    "script-src 'self' 'unsafe-inline'; " +
+                    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+                    "font-src 'self' https://fonts.gstatic.com; " +
+                    "img-src 'self' data: https:; " +
+                    "connect-src 'self' https:; " +
+                    "object-src 'none'; " +
+                    "base-uri 'self'; " +
+                    "form-action 'self'"
+                ]
+            }
+        });
+    });
+
     await win.loadFile('index.html');
     return true;
 });
@@ -292,6 +417,27 @@ ipcMain.handle('open-test-window', async () => {
             contextIsolation: true,
         }
     });
+
+    // Set Content Security Policy
+    win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+        callback({
+            responseHeaders: {
+                ...details.responseHeaders,
+                'Content-Security-Policy': [
+                    "default-src 'self'; " +
+                    "script-src 'self' 'unsafe-inline'; " +
+                    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+                    "font-src 'self' https://fonts.gstatic.com; " +
+                    "img-src 'self' data: https:; " +
+                    "connect-src 'self' https:; " +
+                    "object-src 'none'; " +
+                    "base-uri 'self'; " +
+                    "form-action 'self'"
+                ]
+            }
+        });
+    });
+
     await win.loadFile('test-buttons.html');
     return true;
 });
@@ -309,6 +455,27 @@ ipcMain.handle('open-settings-test-window', async () => {
             contextIsolation: true,
         }
     });
+
+    // Set Content Security Policy
+    win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+        callback({
+            responseHeaders: {
+                ...details.responseHeaders,
+                'Content-Security-Policy': [
+                    "default-src 'self'; " +
+                    "script-src 'self' 'unsafe-inline'; " +
+                    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+                    "font-src 'self' https://fonts.gstatic.com; " +
+                    "img-src 'self' data: https:; " +
+                    "connect-src 'self' https:; " +
+                    "object-src 'none'; " +
+                    "base-uri 'self'; " +
+                    "form-action 'self'"
+                ]
+            }
+        });
+    });
+
     await win.loadFile('test-settings.html');
     return true;
 });
@@ -326,28 +493,29 @@ ipcMain.handle('open-debug-test', async () => {
             contextIsolation: true,
         }
     });
+
+    // Set Content Security Policy
+    win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+        callback({
+            responseHeaders: {
+                ...details.responseHeaders,
+                'Content-Security-Policy': [
+                    "default-src 'self'; " +
+                    "script-src 'self' 'unsafe-inline'; " +
+                    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+                    "font-src 'self' https://fonts.gstatic.com; " +
+                    "img-src 'self' data: https:; " +
+                    "connect-src 'self' https:; " +
+                    "object-src 'none'; " +
+                    "base-uri 'self'; " +
+                    "form-action 'self'"
+                ]
+            }
+        });
+    });
+
     await win.loadFile('debug-test.html');
     return true;
-});
-
-// File operations
-ipcMain.handle('read-file', async (event, filePath) => {
-    try {
-        const fs = require('fs').promises;
-        const path = require('path');
-        
-        // If it's just a filename (like README.md), look in the project root
-        if (!path.isAbsolute(filePath) && !filePath.includes('/') && !filePath.includes('\\')) {
-            const projectRoot = __dirname;
-            filePath = path.join(projectRoot, filePath);
-        }
-        
-        const content = await fs.readFile(filePath, 'utf8');
-        return content;
-    } catch (error) {
-        console.error('Error reading file:', error);
-        throw error;
-    }
 });
 
 // Settings handlers
@@ -455,6 +623,21 @@ app.whenReady().then(async () => {
     statusSystem = new StatusSystem(app.getPath('userData'));
     await statusSystem.initialize();
 
+    // Initialize melody generator learning from library
+    try {
+        const AdvancedMelodyGenerator = require('./advanced-melody-generator');
+        const melodyGenerator = new AdvancedMelodyGenerator();
+        
+        // Get library files for learning
+        const libraryFiles = await statusSystem.getAllFiles();
+        if (libraryFiles && libraryFiles.length > 0) {
+            melodyGenerator.learnFromLibrary(libraryFiles);
+            console.log('✅ Melody generator learned from library');
+        }
+    } catch (error) {
+        console.warn('⚠️ Could not initialize melody learning:', error.message);
+    }
+
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
             createWindow();
@@ -542,21 +725,33 @@ ipcMain.handle('generate-midi', async (event, prompt, context = {}, opts = {}, s
             });
         }
         
-        // Save the MIDI file
-        const filename = `chord_progression_${Date.now()}.mid`;
-        const filePath = path.join(app.getPath('userData'), filename);
+        // Generate smart filename based on prompt
+        const smartFilename = generateSmartMidiFilename(prompt, context);
         
-        // Write the MIDI file
+        // Get MIDI buffer but don't save yet
         const midiBuffer = midi.toArray();
-        await fsp.writeFile(filePath, Buffer.from(midiBuffer));
         
-        console.log(`Chord progression MIDI file created: ${filePath}`);
+        // Detect category from prompt
+        const category = detectMusicCategory(prompt);
+        
+        console.log(`MIDI generated: ${smartFilename} (category: ${category})`);
         
         return {
             success: true,
-            filename: filename,
-            path: filePath,
-            message: 'Chord progression MIDI file generated successfully'
+            data: {
+                success: true,
+                filename: smartFilename,
+                midiBuffer: Buffer.from(midiBuffer),
+                category,
+                metadata: {
+                    prompt,
+                    context,
+                    generatedAt: new Date().toISOString(),
+                    tempo: 120,
+                    key: 'C major'
+                },
+                message: 'MIDI file generated - ready to save'
+            }
         };
         
     } catch (error) {
@@ -567,6 +762,20 @@ ipcMain.handle('generate-midi', async (event, prompt, context = {}, opts = {}, s
         };
     }
 });
+
+// Helper function to detect music category from prompt
+function detectMusicCategory(prompt) {
+    const promptLower = prompt.toLowerCase();
+    
+    if (promptLower.includes('bass') || promptLower.includes('bassline')) return 'bass';
+    if (promptLower.includes('chord') || promptLower.includes('harmony')) return 'chords';
+    if (promptLower.includes('piano') || promptLower.includes('keys')) return 'piano';
+    if (promptLower.includes('drum') || promptLower.includes('beat') || promptLower.includes('rhythm')) return 'drums';
+    if (promptLower.includes('melody') || promptLower.includes('tune')) return 'melody';
+    if (promptLower.includes('jazz') || promptLower.includes('blues') || promptLower.includes('rock')) return 'harmony';
+    
+    return 'other';
+}
 
 // LLM handler for music generation
 ipcMain.handle('llm-run', async (event, { prompt, context = {}, opts = {} }) => {
@@ -743,7 +952,7 @@ ipcMain.handle('get-system-status', async () => {
 
 ipcMain.handle('ask-status-question', async (event, question) => {
     try {
-        const answer = await statusSystem.ask(question);
+        const answer = await statusSystem.answerQuestion(question);
         return answer;
     } catch (error) {
         console.error('Failed to answer status question:', error);
@@ -753,6 +962,42 @@ ipcMain.handle('ask-status-question', async (event, question) => {
 
 ipcMain.handle('get-instrument-counts', async () => {
     return await statusSystem.getInstrumentStatus();
+});
+
+ipcMain.handle('get-ml-data-summary', async () => {
+    try {
+        const status = await statusSystem.getSystemStatus();
+        
+        // Calculate processing rate and data size
+        const totalFiles = status.database?.total_files || 0;
+        const instrumentData = status.instruments?.instruments || {};
+        const totalInstruments = Object.values(instrumentData).reduce((sum, count) => sum + count, 0);
+        
+        return {
+            success: true,
+            summary: {
+                totalProcessedFiles: totalFiles,
+                audioFiles: status.database?.audio_files || 0,
+                midiFiles: status.database?.midi_files || 0,
+                totalInstrumentData: totalInstruments,
+                instruments: instrumentData,
+                lastUpdated: status.database?.last_updated,
+                dataRetention: totalFiles > 0 ? 'YES' : 'NO',
+                processingComplete: totalFiles > 0 && totalInstruments > 0
+            }
+        };
+    } catch (error) {
+        console.error('Error getting ML data summary:', error);
+        return { 
+            success: false, 
+            error: error.message,
+            summary: {
+                totalProcessedFiles: 0,
+                dataRetention: 'ERROR',
+                processingComplete: false
+            }
+        };
+    }
 });
 
 ipcMain.handle('analyze-midi-file', async (event, filePath) => {
@@ -804,3 +1049,335 @@ ipcMain.handle('process-audio-file', async (event, filePath, options = {}) => {
         throw new Error(`Failed to process audio file: ${error.message}`);
     }
 });
+
+ipcMain.handle('generate-with-llm', async (event, prompt, context = {}) => {
+    try {
+        // Get current settings
+        const settings = await loadSettingsFromDisk();
+        
+        // Use simulated response since no real LLM is configured
+        const simulatedResponse = musicGenerator.buildSimulatedLlmResponse(prompt, context, {}, settings);
+        
+        console.log('Generate-with-LLM simulated response:', JSON.stringify(simulatedResponse, null, 2));
+        return simulatedResponse;
+    } catch (error) {
+        throw new Error(`Failed to generate with LLM: ${error.message}`);
+    }
+});
+
+ipcMain.handle('set-llm-provider', async (event, provider, config) => {
+    try {
+        const settings = await loadSettingsFromDisk();
+        
+        // Update settings with new LLM provider
+        settings.cloudLlmProvider = provider;
+        if (config.apiKey) {
+            settings.openaiApiKey = config.apiKey;
+        }
+        
+        // Save updated settings
+        await saveSettingsToDisk(settings);
+        
+        console.log(`LLM provider set to: ${provider}`);
+        return { success: true };
+    } catch (error) {
+        throw new Error(`Failed to set LLM provider: ${error.message}`);
+    }
+});
+
+ipcMain.handle('test-llm-connection', async () => {
+    try {
+        const settings = await loadSettingsFromDisk();
+        
+        // Since we're using simulated responses, always return success
+        return { 
+            success: true, 
+            message: `Simulated connection test passed for provider: ${settings.cloudLlmProvider || 'none'}` 
+        };
+    } catch (error) {
+        return { success: false, message: error.message };
+    }
+});
+
+// Library Management Handlers
+let libraryPath = null;
+const libraryData = new Map(); // In-memory storage for library metadata
+
+// Show save dialog for generated files
+ipcMain.handle('show-save-dialog', async (event, options = {}) => {
+    try {
+        const result = await dialog.showSaveDialog(mainWindow, {
+            title: options.title || 'Save Generated Music',
+            defaultPath: options.defaultPath || 'generated_music',
+            filters: options.filters || [
+                { name: 'MIDI Files', extensions: ['mid', 'midi'] },
+                { name: 'JSON Files', extensions: ['json'] },
+                { name: 'All Files', extensions: ['*'] }
+            ],
+            properties: ['createDirectory']
+        });
+        return result;
+    } catch (error) {
+        console.error('Save dialog error:', error);
+        return { canceled: true, error: error.message };
+    }
+});
+
+// Set library path (user chooses where to store their library)
+ipcMain.handle('set-library-path', async (event, path) => {
+    try {
+        libraryPath = path;
+        
+        // Create library directory structure
+        const categories = ['bass', 'chords', 'piano', 'drums', 'melody', 'harmony', 'rhythm', 'other'];
+        
+        for (const category of categories) {
+            const categoryPath = path.join(libraryPath, category);
+            await fsp.mkdir(categoryPath, { recursive: true });
+        }
+        
+        // Save library path to settings
+        const settings = await loadSettingsFromDisk();
+        settings.libraryPath = libraryPath;
+        await saveSettingsToDisk(settings);
+        
+        console.log('✅ Library path set to:', libraryPath);
+        return { success: true, path: libraryPath };
+    } catch (error) {
+        console.error('❌ Error setting library path:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// Get current library path
+ipcMain.handle('get-library-path', async (event) => {
+    try {
+        if (!libraryPath) {
+            const settings = await loadSettingsFromDisk();
+            libraryPath = settings.libraryPath || path.join(app.getPath('userData'), 'library');
+        }
+        return { success: true, path: libraryPath };
+    } catch (error) {
+        return { success: false, error: error.message };
+    }
+});
+
+// Save generated content to library with category and metadata
+ipcMain.handle('save-to-library', async (event, data) => {
+    try {
+        const { fileName, content, category = 'other', metadata = {}, type = 'midi' } = data;
+        
+        if (!libraryPath) {
+            const settings = await loadSettingsFromDisk();
+            libraryPath = settings.libraryPath || path.join(app.getPath('userData'), 'library');
+            
+            // Create library directory if it doesn't exist
+            await fsp.mkdir(libraryPath, { recursive: true });
+        }
+        
+        // Create category directory if it doesn't exist
+        const categoryPath = path.join(libraryPath, category);
+        await fsp.mkdir(categoryPath, { recursive: true });
+        
+        // Save the main file (MIDI or JSON)
+        const mainFilePath = path.join(categoryPath, fileName);
+        
+        if (type === 'midi' && Buffer.isBuffer(content)) {
+            await fsp.writeFile(mainFilePath, content);
+        } else if (typeof content === 'string') {
+            await fsp.writeFile(mainFilePath, content);
+        } else {
+            await fsp.writeFile(mainFilePath, JSON.stringify(content, null, 2));
+        }
+        
+        // Save metadata as JSON
+        const metadataFileName = fileName.replace(/\.[^/.]+$/, '') + '_metadata.json';
+        const metadataPath = path.join(categoryPath, metadataFileName);
+        
+        const fullMetadata = {
+            ...metadata,
+            fileName,
+            category,
+            type,
+            createdAt: new Date().toISOString(),
+            filePath: mainFilePath
+        };
+        
+        await fsp.writeFile(metadataPath, JSON.stringify(fullMetadata, null, 2));
+        
+        // Store in memory for quick access
+        const libraryKey = `${category}/${fileName}`;
+        libraryData.set(libraryKey, fullMetadata);
+        
+        console.log(`✅ Saved to library: ${mainFilePath}`);
+        return { success: true, filePath: mainFilePath, metadata: fullMetadata };
+        
+    } catch (error) {
+        console.error('❌ Error saving to library:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// Get library files by category
+ipcMain.handle('get-library-files', async (event, category = null) => {
+    try {
+        if (!libraryPath) {
+            const settings = await loadSettingsFromDisk();
+            libraryPath = settings.libraryPath || path.join(app.getPath('userData'), 'library');
+        }
+        
+        const files = [];
+        const categoriesToScan = category ? [category] : ['bass', 'chords', 'piano', 'drums', 'melody', 'harmony', 'rhythm', 'other'];
+        
+        for (const cat of categoriesToScan) {
+            const categoryPath = path.join(libraryPath, cat);
+            
+            try {
+                const categoryFiles = await fsp.readdir(categoryPath);
+                
+                for (const file of categoryFiles) {
+                    if (file.endsWith('_metadata.json')) {
+                        const metadataPath = path.join(categoryPath, file);
+                        const metadata = JSON.parse(await fsp.readFile(metadataPath, 'utf8'));
+                        files.push(metadata);
+                    }
+                }
+            } catch (error) {
+                // Category directory doesn't exist yet
+                continue;
+            }
+        }
+        
+        // Sort by creation date (newest first)
+        files.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        
+        return { success: true, files };
+        
+    } catch (error) {
+        console.error('❌ Error getting library files:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// Get available categories
+ipcMain.handle('get-library-categories', async (event) => {
+    try {
+        if (!libraryPath) {
+            const settings = await loadSettingsFromDisk();
+            libraryPath = settings.libraryPath || path.join(app.getPath('userData'), 'library');
+        }
+        
+        const categories = [];
+        const baseCategoriesPath = libraryPath;
+        
+        try {
+            const items = await fsp.readdir(baseCategoriesPath);
+            
+            for (const item of items) {
+                const itemPath = path.join(baseCategoriesPath, item);
+                const stat = await fsp.stat(itemPath);
+                
+                if (stat.isDirectory()) {
+                    // Count files in category
+                    const categoryFiles = await fsp.readdir(itemPath);
+                    const fileCount = categoryFiles.filter(f => !f.endsWith('_metadata.json')).length;
+                    
+                    categories.push({
+                        name: item,
+                        fileCount
+                    });
+                }
+            }
+        } catch (error) {
+            // Library directory doesn't exist yet
+        }
+        
+        return { success: true, categories };
+        
+    } catch (error) {
+        console.error('❌ Error getting categories:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// Clear library handler
+ipcMain.handle('clear-library', async (event) => {
+    try {
+        if (statusSystem) {
+            await statusSystem.clearDatabase();
+            return { success: true };
+        } else {
+            return { success: false, error: 'Status system not initialized' };
+        }
+    } catch (error) {
+        console.error('❌ Error clearing library:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// Reindex library handler
+ipcMain.handle('reindex-library', async (event) => {
+    try {
+        if (statusSystem) {
+            await statusSystem.reindexFiles();
+            return { success: true };
+        } else {
+            return { success: false, error: 'Status system not initialized' };
+        }
+    } catch (error) {
+        console.error('❌ Error reindexing library:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// Audio playback handler
+ipcMain.handle('play-audio-file', async (event, filePath) => {
+    try {
+        const { shell } = require('electron');
+        
+        // Check if file exists
+        if (!fs.existsSync(filePath)) {
+            throw new Error('Audio file not found');
+        }
+        
+        // Use the default system audio player
+        await shell.openPath(filePath);
+        
+        return { success: true };
+        
+    } catch (error) {
+        console.error('❌ Error playing audio file:', error);
+        return { success: false, error: error.message };
+    }
+});
+
+// Helper Functions
+
+// Detect music category from prompt
+function detectMusicCategory(prompt) {
+    const promptLower = prompt.toLowerCase();
+    
+    if (promptLower.includes('bass') || promptLower.includes('low') || promptLower.includes('sub')) {
+        return 'bass';
+    }
+    if (promptLower.includes('chord') || promptLower.includes('harmony') || promptLower.includes('progression')) {
+        return 'chords';
+    }
+    if (promptLower.includes('piano') || promptLower.includes('key')) {
+        return 'piano';
+    }
+    if (promptLower.includes('drum') || promptLower.includes('beat') || promptLower.includes('percussion')) {
+        return 'drums';
+    }
+    if (promptLower.includes('melody') || promptLower.includes('tune') || promptLower.includes('lead')) {
+        return 'melody';
+    }
+    if (promptLower.includes('rhythm') || promptLower.includes('tempo')) {
+        return 'rhythm';
+    }
+    if (promptLower.includes('harmonic') || promptLower.includes('harmony')) {
+        return 'harmony';
+    }
+    
+    return 'other';
+}

@@ -2,6 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self';">
     <title>Settings - AI Music Assistant</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
     <style>
@@ -112,6 +113,41 @@
             <span id="temperatureValue">0.7</span>
         </div>
         
+        <!-- Auto-Naming Settings -->
+        <div class="setting-section">
+            <h2>🏷️ Auto-Naming System</h2>
+            
+            <div class="setting-group">
+                <label class="setting-label">Enable Smart File Naming</label>
+                <input type="checkbox" id="autoNamingEnabled" class="setting-input" checked>
+                <small style="color: #00aa00; font-size: 12px; margin-top: 5px; display: block;">
+                    Automatically generate intelligent filenames based on your prompt and analyzed music patterns
+                </small>
+            </div>
+            
+            <div class="setting-group">
+                <label class="setting-label">Naming Template</label>
+                <select id="autoNamingTemplate" class="setting-input">
+                    <option value="simple">Simple (prompt + timestamp)</option>
+                    <option value="descriptive" selected>Descriptive (genre + mood + instrument)</option>
+                    <option value="analytical">Analytical (key + tempo + technical)</option>
+                    <option value="creative">Creative (artistic names)</option>
+                    <option value="professional">Professional (industry standard)</option>
+                </select>
+                <small style="color: #00aa00; font-size: 12px; margin-top: 5px; display: block;">
+                    Choose how your files should be automatically named
+                </small>
+            </div>
+            
+            <div class="setting-group">
+                <label class="setting-label">Show Filename Suggestions</label>
+                <input type="checkbox" id="showFilenameSuggestions" class="setting-input" checked>
+                <small style="color: #00aa00; font-size: 12px; margin-top: 5px; display: block;">
+                    Show a dialog with multiple filename options before saving files
+                </small>
+            </div>
+        </div>
+        
         <div class="setting-group">
             <button class="neon-button" id="saveSettings">Save Settings</button>
             <button class="neon-button" id="backToMain">Back to Main</button>
@@ -127,7 +163,12 @@
             cloudLlmProvider: 'none',
             apiKey: '',
             modelSize: 'medium',
-            temperature: 0.7
+            temperature: 0.7,
+            autoNaming: {
+                enabled: true,
+                template: 'descriptive',
+                showSuggestions: true
+            }
         };
 
         // Load settings when page loads
@@ -156,6 +197,13 @@
             document.getElementById('modelSize').value = settings.modelSize;
             document.getElementById('temperature').value = settings.temperature;
             document.getElementById('temperatureValue').textContent = settings.temperature;
+            
+            // Auto-naming settings
+            if (settings.autoNaming) {
+                document.getElementById('autoNamingEnabled').checked = settings.autoNaming.enabled;
+                document.getElementById('autoNamingTemplate').value = settings.autoNaming.template;
+                document.getElementById('showFilenameSuggestions').checked = settings.autoNaming.showSuggestions;
+            }
         }
 
         // Save settings
@@ -169,6 +217,13 @@
                 settings.apiKey = document.getElementById('apiKey').value;
                 settings.modelSize = document.getElementById('modelSize').value;
                 settings.temperature = parseFloat(document.getElementById('temperature').value);
+                
+                // Update auto-naming settings
+                settings.autoNaming = {
+                    enabled: document.getElementById('autoNamingEnabled').checked,
+                    template: document.getElementById('autoNamingTemplate').value,
+                    showSuggestions: document.getElementById('showFilenameSuggestions').checked
+                };
 
                 if (window.electronAPI && window.electronAPI.invoke) {
                     await window.electronAPI.invoke('save-settings', settings);

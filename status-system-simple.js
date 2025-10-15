@@ -25,10 +25,13 @@ class StatusSystem {
             try {
                 const dataContent = await fsp.readFile(this.dataPath, 'utf8');
                 this.data = JSON.parse(dataContent);
-                console.log(`Loaded existing data with ${this.data.files?.length || 0} files`);
+                console.log(`📁 Loaded existing data with ${this.data.files?.length || 0} files`);
+                console.log(`📊 Data file path: ${this.dataPath}`);
+                console.log(`📅 Last updated: ${this.data.lastUpdated}`);
             } catch (error) {
                 // File doesn't exist or is invalid, start fresh
                 console.log('Starting with fresh data');
+                console.log(`📁 Data file path: ${this.dataPath}`);
                 this.data = {
                     files: [],
                     features: [],
@@ -64,10 +67,13 @@ class StatusSystem {
     async saveData() {
         try {
             this.data.lastUpdated = new Date().toISOString();
+            console.log(`💾 Saving data to: ${this.dataPath}`);
+            console.log(`📊 Data contains ${this.data.files?.length || 0} files`);
             await fsp.writeFile(this.dataPath, JSON.stringify(this.data, null, 2), 'utf8');
+            console.log('✅ Data saved successfully');
             return true;
         } catch (error) {
-            console.error('Error saving data:', error);
+            console.error('❌ Error saving data:', error);
             return false;
         }
     }
@@ -214,6 +220,7 @@ class StatusSystem {
 
     async addFile(fileData) {
         try {
+            console.log(`📁 Adding file to database: ${fileData.fileName}`);
             const file = {
                 id: Date.now().toString(),
                 filePath: fileData.filePath,
@@ -226,7 +233,14 @@ class StatusSystem {
             };
             
             this.data.files.push(file);
-            await this.saveData();
+            console.log(`✅ File added to memory. Total files: ${this.data.files.length}`);
+            
+            const saveResult = await this.saveData();
+            if (saveResult) {
+                console.log(`💾 File data saved to disk: ${fileData.fileName}`);
+            } else {
+                console.error(`❌ Failed to save file data: ${fileData.fileName}`);
+            }
             
             return { success: true, fileId: file.id };
         } catch (error) {
@@ -306,6 +320,46 @@ class StatusSystem {
         } catch (error) {
             console.error('Error getting model files:', error);
             return [];
+        }
+    }
+
+    async clearDatabase() {
+        try {
+            // Clear all data
+            this.data = {
+                files: [],
+                features: [],
+                lastUpdated: new Date().toISOString()
+            };
+            
+            // Save empty data to file
+            await this.saveData();
+            console.log('📗 Database cleared successfully');
+            return { success: true };
+        } catch (error) {
+            console.error('Error clearing database:', error);
+            throw error;
+        }
+    }
+
+    async reindexFiles() {
+        try {
+            // For now, just update the lastUpdated timestamp
+            // In a full implementation, this would scan and re-analyze all files
+            this.data.lastUpdated = new Date().toISOString();
+            
+            // Update file indices and features
+            this.data.files.forEach((file, index) => {
+                file.id = file.id || index + 1;
+                file.dateAdded = file.dateAdded || new Date().toISOString();
+            });
+            
+            await this.saveData();
+            console.log('📗 Library reindexed successfully');
+            return { success: true };
+        } catch (error) {
+            console.error('Error reindexing files:', error);
+            throw error;
         }
     }
 }

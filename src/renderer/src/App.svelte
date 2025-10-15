@@ -88,7 +88,7 @@
       {:else if currentView === 'library'}
         <Library />
       {:else if currentView === 'settings'}
-        <Settings />
+        <Settings closeSettings={() => navigateTo('dashboard')} />
       {/if}
     </div>
   {/if}

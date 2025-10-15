@@ -1,4 +1,5 @@
 <script>
+  export let closeSettings = () => {};
   import { onMount } from 'svelte';
   
   let settings = {
@@ -117,6 +118,9 @@
       </button>
       <button class="btn-primary" on:click={saveSettings} disabled={isSaving}>
         {isSaving ? 'Saving...' : 'Save Settings'}
+      </button>
+      <button class="btn-accent font-bold px-4 py-2 rounded shadow ml-2" style="min-width:120px;" on:click={closeSettings}>
+        ← Back to Main
       </button>
     </div>
   </div>

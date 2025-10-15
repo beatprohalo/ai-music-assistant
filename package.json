@@ -6,6 +6,7 @@
   "scripts": {
     "start": "electron .",
     "dev": "electron . --dev",
+    "test": "node test-app-loading.js && node test-database-loading.js && node test-ml-components.js",
     "build": "electron-builder",
     "build:mac": "electron-builder --mac",
     "build:win": "electron-builder --win",
@@ -35,12 +36,14 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@tonejs/midi": "^2.0.28",
-    "meyda": "^5.6.3",
-    "web-audio-api": "^0.2.2",
-    "openai": "^4.20.1",
     "@anthropic-ai/sdk": "^0.17.1",
-    "@google/generative-ai": "^0.2.1"
+    "@google/generative-ai": "^0.2.1",
+    "@tonejs/midi": "^2.0.28",
+    "better-sqlite3": "^12.4.1",
+    "bindings": "^1.5.0",
+    "meyda": "^5.6.3",
+    "openai": "^4.20.1",
+    "web-audio-api": "^0.2.2"
   },
   "devDependencies": {
     "electron": "^27.0.0",
@@ -70,7 +73,9 @@
       {
         "from": "HumanizerAI",
         "to": "HumanizerAI",
-        "filter": ["**/*"]
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "mac": {
@@ -78,11 +83,17 @@
       "target": [
         {
           "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         },
         {
           "target": "zip",
-          "arch": ["x64", "arm64"]
+          "arch": [
+            "x64",
+            "arm64"
+          ]
         }
       ],
       "icon": "build/icon.icns",
@@ -93,11 +104,16 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64", "ia32"]
+          "arch": [
+            "x64",
+            "ia32"
+          ]
         },
         {
           "target": "portable",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ]
     },
@@ -105,11 +121,15 @@
       "target": [
         {
           "target": "AppImage",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "deb",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "build/icon.png",

@@ -35,9 +35,22 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSettings: () => ipcRenderer.invoke('get-settings'),
   saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),
 
-  // File download
+  // File download and save operations
   downloadFile: (filePath) => ipcRenderer.invoke('download-file', { filePath }),
   showInFolder: (filePath) => ipcRenderer.invoke('show-in-folder', filePath),
+  showSaveDialog: (options) => ipcRenderer.invoke('show-save-dialog', options),
+  
+  // Library management
+  setLibraryPath: (path) => ipcRenderer.invoke('set-library-path', path),
+  getLibraryPath: () => ipcRenderer.invoke('get-library-path'),
+  saveToLibrary: (data) => ipcRenderer.invoke('save-to-library', data),
+  getLibraryFiles: (category) => ipcRenderer.invoke('get-library-files', category),
+  getLibraryCategories: () => ipcRenderer.invoke('get-library-categories'),
+  clearLibrary: () => ipcRenderer.invoke('clear-library'),
+  reindexLibrary: () => ipcRenderer.invoke('reindex-library'),
+  
+  // Audio playback
+  playAudioFile: (filePath) => ipcRenderer.invoke('play-audio-file', filePath),
   // Analysis functions
   analyzeAudioFile: (filePath) => ipcRenderer.invoke('process-audio-file', filePath),
   analyzeMidiFile: (filePath) => ipcRenderer.invoke('analyze-midi-file', filePath),
@@ -58,8 +71,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Debug
   debugTest: (message) => ipcRenderer.invoke('debug-test', message),
   
-  // Status System
-  getSystemStatus: () => ipcRenderer.invoke('get-system-status'),
-  askStatusQuestion: (question) => ipcRenderer.invoke('ask-status-question', question),
-  getInstrumentCounts: () => ipcRenderer.invoke('get-instrument-counts')
+      // Status and monitoring
+    getSystemStatus: () => ipcRenderer.invoke('get-system-status'),
+    askStatusQuestion: (question) => ipcRenderer.invoke('ask-status-question', question),
+    getInstrumentCounts: () => ipcRenderer.invoke('get-instrument-counts'),
+    getMLDataSummary: () => ipcRenderer.invoke('get-ml-data-summary'),
 });

@@ -93,12 +93,25 @@ Request: "${prompt}"
 ${context}
 
 Based on this request and context, provide specific musical suggestions including:
-1. Stylistic approach and mood
-2. Key musical elements (melody, harmony, rhythm)
-3. Technical suggestions for MIDI programming
-4. Humanization techniques if applicable
+1. **Melody Structure**: Describe the melodic contour (ascending, descending, arch-shaped, wave-like, etc.) and key musical motifs
+2. **Harmonic Foundation**: Suggest chord progressions and harmonic rhythm that would support the melody
+3. **Rhythmic Feel**: Specify tempo, time signature, and rhythmic patterns
+4. **Stylistic Elements**: Genre-specific techniques, articulation, and expression
+5. **Development Ideas**: How the melody should develop over time (repetition, variation, contrast)
 
-Be specific and actionable in your response.`;
+Be specific and actionable in your response. Include concrete suggestions for:
+- Melody shape and contour
+- Key musical intervals and motifs
+- Rhythmic patterns and phrasing
+- Harmonic context and chord relationships
+- Emotional arc and dynamic changes
+
+For melody generation, consider:
+- **Motif Development**: Suggest 2-4 note motifs that can be repeated and varied
+- **Shape and Contour**: Describe the overall melodic shape (arch, ascending, wave, etc.)
+- **Phrasing**: How the melody should be phrased and where tension/release occurs
+- **Ornamentation**: Appropriate embellishments for the style
+- **Range**: Vocal/instrumental range considerations`;
 
     try {
         let response = "";

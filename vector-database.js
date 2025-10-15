@@ -2,7 +2,7 @@
 // Real vector database implementation with LanceDB and SQLite
 const path = require('path');
 const fs = require('fs');
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3');
 
 const userDataPath = process.argv.find(arg => arg.startsWith('--user-data-path='))?.split('=')[1] || process.cwd();
 const dbPath = path.join(userDataPath, 'HumanizerAI', 'lancedb');
@@ -39,17 +39,14 @@ async function initVectorDatabase() {
 }
 
 async function initSQLite() {
-    return new Promise((resolve, reject) => {
-        db = new sqlite3.Database(sqlitePath, (err) => {
-            if (err) {
-                console.error('Error opening SQLite database:', err);
-                reject(err);
-            } else {
-                console.log('Connected to SQLite database');
-                createSQLiteTables().then(resolve).catch(reject);
-            }
-        });
-    });
+    try {
+        db = new Database(sqlitePath);
+        console.log('Connected to SQLite database');
+        await createSQLiteTables();
+    } catch (error) {
+        console.error('Error initializing SQLite:', error);
+        throw error;
+    }
 }
 
 async function createSQLiteTables() {
@@ -80,22 +77,14 @@ async function createSQLiteTables() {
         )
     `;
 
-    return new Promise((resolve, reject) => {
-        db.exec(createFilesTable, (err) => {
-            if (err) {
-                reject(err);
-            } else {
-                db.exec(createFeaturesTable, (err) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        console.log('SQLite tables created successfully');
-                        resolve();
-                    }
-                });
-            }
-        });
-    });
+    try {
+        db.exec(createFilesTable);
+        db.exec(createFeaturesTable);
+        console.log('SQLite tables created successfully');
+    } catch (error) {
+        console.error('Error creating SQLite tables:', error);
+        throw error;
+    }
 }
 
 async function addFeaturesToDB(fileData) {
@@ -152,38 +141,36 @@ async function addFeaturesToDB(fileData) {
 }
 
 async function insertFileSQLite(fileData) {
-    return new Promise((resolve, reject) => {
+    try {
         const { path: filePath, name: fileName, size: fileSize, type: fileType, category, tags, analysisData } = fileData;
         const sql = `
             INSERT OR REPLACE INTO files (filePath, fileName, fileSize, fileType, category, tags, analysisData)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
         
-        db.run(sql, [filePath, fileName, fileSize, fileType, category, JSON.stringify(tags), JSON.stringify(analysisData)], function(err) {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(this.lastID);
-            }
-        });
-    });
+        const stmt = db.prepare(sql);
+        const result = stmt.run(filePath, fileName, fileSize, fileType, category, JSON.stringify(tags), JSON.stringify(analysisData));
+        return result.lastInsertRowid;
+    } catch (error) {
+        console.error('Error inserting file:', error);
+        throw error;
+    }
 }
 
 async function insertFeatureSQLite(fileId, featureType, featureData) {
-    return new Promise((resolve, reject) => {
+    try {
         const sql = `
             INSERT INTO features (fileId, featureType, featureVector, metadata)
             VALUES (?, ?, ?, ?)
         `;
         
-        db.run(sql, [fileId, featureType, JSON.stringify(featureData.featureVector), JSON.stringify(featureData.metadata || {})], function(err) {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(this.lastID);
-            }
-        });
-    });
+        const stmt = db.prepare(sql);
+        const result = stmt.run(fileId, featureType, JSON.stringify(featureData.featureVector), JSON.stringify(featureData.metadata || {}));
+        return result.lastInsertRowid;
+    } catch (error) {
+        console.error('Error inserting feature:', error);
+        throw error;
+    }
 }
 
 async function queryHumanizationFeatures(queryVector, limit = 5) {
@@ -235,7 +222,7 @@ async function queryPatternFeatures(queryVector, limit = 5) {
 }
 
 async function querySimilarSQLite(queryVector, featureType, limit) {
-    return new Promise((resolve, reject) => {
+    try {
         const sql = `
             SELECT f.*, fe.featureVector, fe.metadata
             FROM files f
@@ -245,27 +232,27 @@ async function querySimilarSQLite(queryVector, featureType, limit) {
             LIMIT ?
         `;
         
-        db.all(sql, [featureType, limit * 2], (err, rows) => {
-            if (err) {
-                reject(err);
-            } else {
-                // Calculate cosine similarity
-                const results = rows.map(row => {
-                    const storedVector = JSON.parse(row.featureVector);
-                    const similarity = calculateCosineSimilarity(queryVector, storedVector);
-                    return {
-                        ...row,
-                        similarity,
-                        _distance: 1 - similarity,
-                        featureVector: storedVector,
-                        metadata: JSON.parse(row.metadata || '{}')
-                    };
-                }).sort((a, b) => b.similarity - a.similarity).slice(0, limit);
-                
-                resolve(results);
-            }
-        });
-    });
+        const stmt = db.prepare(sql);
+        const rows = stmt.all(featureType, limit * 2);
+        
+        // Calculate cosine similarity
+        const results = rows.map(row => {
+            const storedVector = JSON.parse(row.featureVector);
+            const similarity = calculateCosineSimilarity(queryVector, storedVector);
+            return {
+                ...row,
+                similarity,
+                _distance: 1 - similarity,
+                featureVector: storedVector,
+                metadata: JSON.parse(row.metadata || '{}')
+            };
+        }).sort((a, b) => b.similarity - a.similarity).slice(0, limit);
+        
+        return results;
+    } catch (error) {
+        console.error('Error querying similar features:', error);
+        return [];
+    }
 }
 
 function calculateCosineSimilarity(vecA, vecB) {

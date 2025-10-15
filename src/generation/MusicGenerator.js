@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const AdvancedMelodyGenerator = require('../../advanced-melody-generator');
 
 class MusicGenerator {
   constructor() {
@@ -9,6 +10,7 @@ class MusicGenerator {
       rhythm: this.generateRhythm,
       bassline: this.generateBassline
     };
+    this.advancedMelodyGenerator = new AdvancedMelodyGenerator();
   }
 
   async generateMusic(prompt, options = {}) {
@@ -36,12 +38,16 @@ class MusicGenerator {
           style,
           generatedAt: new Date().toISOString()
         },
-        tracks: []
+        tracks: [],
+        harmony: this.buildHarmony(analysisPatterns) // Add harmony info
       };
 
       // Generate different tracks based on style
       if (style === 'melodic' || style === 'harmonic') {
-        music.tracks.push(await this.generateMelodyTrack(musicalDescription, options));
+        music.tracks.push(await this.generateMelodyTrack(musicalDescription, {
+          ...options,
+          chordProgression: music.harmony?.chord_progression
+        }));
         music.tracks.push(await this.generateHarmonyTrack(musicalDescription, options));
       }
 
@@ -69,14 +75,18 @@ class MusicGenerator {
   }
 
   parseMusicalDescription(prompt) {
-    // Simple parsing - in a real implementation, this would be more sophisticated
+    // Enhanced parsing for advanced melody generation
     const description = {
       title: this.extractTitle(prompt),
       mood: this.extractMood(prompt),
       instruments: this.extractInstruments(prompt),
       style: this.extractStyle(prompt),
       key: this.extractKey(prompt),
-      tempo: this.extractTempo(prompt)
+      tempo: this.extractTempo(prompt),
+      prompt: prompt, // Keep original prompt for advanced analysis
+      shape: this.extractShape(prompt),
+      complexity: this.extractComplexity(prompt),
+      genre: this.extractGenre(prompt)
     };
 
     return description;
@@ -114,38 +124,62 @@ class MusicGenerator {
 
   extractTempo(prompt) {
     const tempoMatch = prompt.match(/(\d+)\s*bpm/i);
-    return tempoMatch ? parseInt(tempoMatch[1]) : 120;
+    if (tempoMatch) {
+      const tempo = parseInt(tempoMatch[1]);
+      return Math.max(60, Math.min(200, tempo)); // Clamp between 60-200 BPM
+    }
+
+    // Check for tempo descriptions
+    if (prompt.toLowerCase().includes('slow')) return 80;
+    if (prompt.toLowerCase().includes('fast') || prompt.toLowerCase().includes('energetic')) return 160;
+    if (prompt.toLowerCase().includes('moderate')) return 120;
+    if (prompt.toLowerCase().includes('jazz')) return 180;
+    if (prompt.toLowerCase().includes('classical')) return 100;
+    if (prompt.toLowerCase().includes('electronic') || prompt.toLowerCase().includes('hip-hop')) return 140;
+
+    return 120; // Default tempo
+  }
+
+  extractGenre(prompt) {
+    const genres = ['jazz', 'classical', 'rock', 'blues', 'electronic', 'folk', 'pop', 'ambient', 'hip-hop', 'country'];
+    const foundGenre = genres.find(genre => prompt.toLowerCase().includes(genre));
+    return foundGenre || 'general';
+  }
+
+  extractShape(prompt) {
+    const shapes = ['ascending', 'descending', 'arch', 'wave', 'zigzag', 'plateau', 'rising', 'falling'];
+    const foundShape = shapes.find(shape => prompt.toLowerCase().includes(shape));
+    return foundShape || 'arch';
+  }
+
+  extractComplexity(prompt) {
+    if (prompt.toLowerCase().includes('simple') || prompt.toLowerCase().includes('basic')) {
+      return 'simple';
+    } else if (prompt.toLowerCase().includes('complex') || prompt.toLowerCase().includes('advanced')) {
+      return 'complex';
+    }
+    return 'medium';
   }
 
   async generateMelodyTrack(description, options) {
-    const { tempo = 120, key = 'C major', duration = 16 } = options;
-    const keyNotes = this.getKeyNotes(key);
-    
-    const melody = {
+    // Use the advanced melody generator for much better results
+    const melodyNotes = this.advancedMelodyGenerator.generateMelody({
+      key: description.key || options.key || 'C',
+      scale: 'major',
+      length: options.duration ? options.duration * 4 : 64,
+      tempo: options.tempo || 120,
+      shape: description.shape || 'arch',
+      complexity: description.complexity || 'medium',
+      chordProgression: options.chordProgression || null,
+      mood: description.mood || 'neutral',
+      genre: description.genre || 'general'
+    });
+
+    return {
       name: 'Melody',
-      instrument: 'Piano',
-      notes: []
+      instrument: (description.instruments && description.instruments[0]) || 'Piano',
+      notes: melodyNotes
     };
-
-    const beatsPerBar = 4;
-    const totalBeats = duration * beatsPerBar;
-    const beatDuration = 60 / tempo; // seconds per beat
-
-    for (let beat = 0; beat < totalBeats; beat += 0.5) {
-      if (Math.random() > 0.3) { // 70% chance of note
-        const note = this.generateMelodyNote(beat, keyNotes, description);
-        if (note) {
-          melody.notes.push({
-            pitch: note.pitch,
-            velocity: note.velocity,
-            startTime: beat * beatDuration,
-            duration: note.duration * beatDuration
-          });
-        }
-      }
-    }
-
-    return melody;
   }
 
   generateMelodyNote(beat, keyNotes, description) {

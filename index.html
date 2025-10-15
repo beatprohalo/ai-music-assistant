@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval';">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self';">
     <title>ML BANK</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
     <link rel="stylesheet" href="styles.css">
@@ -16,6 +16,8 @@
             <button id="upload-audio-btn" class="neon-button toggle-button">🎵 ADD AUDIO</button>
             <button id="upload-midi-btn" class="neon-button toggle-button">🎹 ADD MIDI</button>
             <button id="upload-folder-btn" class="neon-button toggle-button">📂 ADD FOLDER</button>
+            <button id="browse-library-btn" class="neon-button toggle-button">📚 LIBRARY</button>
+            <button id="setup-library-btn" class="neon-button toggle-button">🏗️ SETUP LIBRARY</button>
             <button id="purge-database-btn" class="neon-button toggle-button danger-button">🗑️ CLEAR ALL</button>
             <button id="rescan-library-btn" class="neon-button toggle-button">🔄 REFRESH</button>
         </div>

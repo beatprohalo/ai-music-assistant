@@ -8,12 +8,24 @@ const midiAnalyzer = {
     analyze: (filePath) => electronAPI.analyzeMidiFile(filePath)
 };
 
-// IPC renderer exposed from preload.js
-const ipcRenderer = window.ipcRenderer;
+// IPC renderer exposed from preload.js - use electronAPI instead of direct ipcRenderer
+// const ipcRenderer = window.ipcRenderer; // ❌ REMOVED - violates context isolation
 
 const llmOrchestrator = {
     runPrompt: (prompt) => electronAPI.invoke('llm-run', { prompt }),
     summarize: (text) => electronAPI.invoke('llm-summarize', { text })
+};
+
+// Load auto-naming system
+const autoNamingScript = document.createElement('script');
+autoNamingScript.src = './auto-naming-system.js';
+document.head.appendChild(autoNamingScript);
+
+// Initialize auto-naming system once loaded
+let autoNaming = null;
+autoNamingScript.onload = () => {
+    autoNaming = new AutoNamingSystem();
+    console.log('🏷️ Auto-naming system loaded');
 };
 
 // Simple application state
@@ -24,7 +36,12 @@ let appSettings = {
     cloudLlmProvider: 'none',
     apiKey: '',
     modelSize: 'medium',
-    temperature: 0.7
+    temperature: 0.7,
+    autoNaming: {
+        enabled: true,
+        template: 'descriptive',
+        showSuggestions: true
+    }
 };
 
 let userDataPath = '';
@@ -74,6 +91,55 @@ async function initializeApp() {
         hideLoadingScreen();
         logToOLED('🎵 AI Music Assistant initialized successfully!');
         logToOLED('📁 Ready to analyze audio and MIDI files');
+        
+        // Show comprehensive data readout on startup
+        setTimeout(async () => {
+            try {
+                const status = await electronAPI.getSystemStatus();
+                if (status && status.database && status.database.total_files > 0) {
+                    logToOLED('');
+                    logToOLED('🎶 ================================');
+                    logToOLED('🎵 MUSICAL LIBRARY LOADED & READY');
+                    logToOLED('🎶 ================================');
+                    logToOLED('');
+                    logToOLED(`📊 TOTAL PROCESSED FILES: <span style="color: #00ff00; font-weight: bold;">${status.database.total_files}</span>`);
+                    logToOLED(`🎵 Audio Samples: <span style="color: #ff6600">${status.database.audio_files}</span>`);
+                    logToOLED(`🎹 MIDI Files: <span style="color: #6600ff">${status.database.midi_files}</span>`);
+                    logToOLED('');
+                    
+                    if (status.instruments && status.instruments.instruments) {
+                        logToOLED('🎸 YOUR INSTRUMENT ARSENAL:');
+                        logToOLED('─────────────────────────────────');
+                        const instruments = status.instruments.instruments;
+                        Object.entries(instruments).forEach(([name, count]) => {
+                            if (count > 0) {
+                                const emoji = getInstrumentEmoji(name);
+                                const coloredCount = `<span style="color: #ffff00; font-weight: bold;">${count}</span>`;
+                                logToOLED(`${emoji} ${name}: ${coloredCount} samples ready`);
+                            }
+                        });
+                        
+                        const totalSamples = Object.values(instruments).reduce((sum, count) => sum + count, 0);
+                        logToOLED('');
+                        logToOLED(`🎯 TOTAL SAMPLES: <span style="color: #00ffff; font-weight: bold;">${totalSamples}</span> instrument data points`);
+                    }
+                    
+                    logToOLED('');
+                    logToOLED('✅ YOUR MUSIC LIBRARY IS LOADED & READY!');
+                    logToOLED('🚀 Start generating music with your samples!');
+                    const lastUpdate = status.database.last_updated ? new Date(status.database.last_updated).toLocaleDateString() : 'Unknown';
+                    logToOLED(`📅 Last processed: ${lastUpdate}`);
+                } else {
+                    logToOLED('');
+                    logToOLED('⚠️  NO PROCESSED MUSIC DATA FOUND');
+                    logToOLED('📁 Upload audio/MIDI files to get started');
+                    logToOLED('🔄 Process files to build your music library');
+                }
+            } catch (error) {
+                logToOLED('❌ Error loading music library status');
+                console.error('Startup status error:', error);
+            }
+        }, 1000); // Small delay to ensure UI is ready
         
         // Set up folder scan progress listener
         electronAPI.on('folder-scan-progress', (fileCount) => {
@@ -439,8 +505,10 @@ async function scanFiles(filePaths) {
         updateLibraryDisplay();
         displayScanResults(results);
         
-        // Update OLED display with new data
-        updateOLEDDisplay();
+        // Update OLED display with new data after a short delay to ensure database is updated
+        setTimeout(async () => {
+            await updateOLEDDisplay();
+        }, 1000);
         
     } catch (error) {
         console.error('Scanning error:', error);
@@ -606,7 +674,203 @@ function detectMidiMood(analysis) {
     return detectMood(analysis);
 }
 
-// MIDI Generation with download
+// Smart filename generator using auto-naming system
+function generateSmartFilename(prompt, type = 'json', options = {}) {
+    try {
+        // Wait for auto-naming system to be loaded
+        if (!autoNaming) {
+            console.warn('Auto-naming system not loaded, using fallback');
+            return getFallbackFilename(prompt, type);
+        }
+
+        // Get analysis patterns from loaded files
+        const analysisPatterns = extractAnalysisPatterns();
+        
+        // Use auto-naming system with user preferences
+        const namingOptions = {
+            template: appSettings.autoNaming?.template || 'descriptive',
+            maxLength: 45,
+            ...options
+        };
+        
+        const filename = autoNaming.generateFilename(prompt, analysisPatterns, type, namingOptions);
+        
+        logToOLED(`🏷️ Smart filename generated: ${filename}`);
+        return filename;
+        
+    } catch (error) {
+        console.error('Smart naming failed:', error);
+        return getFallbackFilename(prompt, type);
+    }
+}
+
+// Get filename suggestions for user selection
+function getFilenameSuggestions(prompt, type = 'json', count = 3) {
+    try {
+        if (!autoNaming) return [];
+        
+        const analysisPatterns = extractAnalysisPatterns();
+        return autoNaming.getSuggestions(prompt, analysisPatterns, type, count);
+    } catch (error) {
+        console.error('Failed to get filename suggestions:', error);
+        return [];
+    }
+}
+
+// Extract analysis patterns from loaded files
+function extractAnalysisPatterns() {
+    if (!loadedFiles || loadedFiles.length === 0) {
+        return {
+            keys: new Set(['C']),
+            genres: new Set(['Electronic']),
+            instruments: new Set(['Synth']),
+            chords: new Set(['C-F-G']),
+            moods: new Set(['Ambient']),
+            tempoRange: { min: 120, max: 140 }
+        };
+    }
+
+    // Aggregate patterns from all loaded files
+    const patterns = {
+        keys: new Set(),
+        genres: new Set(),
+        instruments: new Set(),
+        chords: new Set(),
+        moods: new Set(),
+        tempos: []
+    };
+
+    loadedFiles.forEach(file => {
+        if (file.analysis) {
+            // Extract key information
+            if (file.analysis.key) patterns.keys.add(file.analysis.key);
+            if (file.analysis.genre) patterns.genres.add(file.analysis.genre);
+            if (file.analysis.mood) patterns.moods.add(file.analysis.mood);
+            if (file.analysis.tempo) patterns.tempos.push(file.analysis.tempo);
+            
+            // Extract instruments
+            if (file.analysis.instruments) {
+                file.analysis.instruments.forEach(inst => patterns.instruments.add(inst));
+            }
+            
+            // Extract chords
+            if (file.analysis.chords) {
+                file.analysis.chords.forEach(chord => patterns.chords.add(chord));
+            }
+        }
+    });
+
+    // Calculate tempo range
+    const tempos = patterns.tempos.filter(t => t > 0);
+    patterns.tempoRange = tempos.length > 0 ? {
+        min: Math.min(...tempos),
+        max: Math.max(...tempos)
+    } : { min: 120, max: 140 };
+
+    return patterns;
+}
+
+// Fallback filename generator
+function getFallbackFilename(prompt, type) {
+    const timestamp = new Date().toISOString()
+        .replace(/[-:]/g, '')
+        .replace(/\.\d{3}Z/, '')
+        .substring(2, 13);
+    
+    const sanitized = prompt
+        .replace(/[^a-zA-Z0-9\s]/g, '')
+        .replace(/\s+/g, '_')
+        .substring(0, 20);
+    
+    const extension = type === 'midi' ? '.mid' : '.json';
+    
+    return sanitized ? `${sanitized}_${timestamp}${extension}` : `generated_${timestamp}${extension}`;
+}
+
+// Show filename selection dialog
+async function showFilenameDialog(prompt, type, suggestions) {
+    return new Promise((resolve) => {
+        // Create modal dialog
+        const modal = document.createElement('div');
+        modal.className = 'filename-modal';
+        modal.innerHTML = `
+            <div class="filename-dialog">
+                <h3>📝 Choose Filename</h3>
+                <p>Select or customize the filename for your generated ${type.toUpperCase()} file:</p>
+                
+                <div class="filename-suggestions">
+                    ${suggestions.map((suggestion, index) => `
+                        <label class="filename-option">
+                            <input type="radio" name="filename" value="${suggestion.name}" ${index === 0 ? 'checked' : ''}>
+                            <span class="filename-text">${suggestion.name}</span>
+                            <small class="filename-desc">${suggestion.description}</small>
+                        </label>
+                    `).join('')}
+                    
+                    <label class="filename-option">
+                        <input type="radio" name="filename" value="custom">
+                        <span class="filename-text">Custom:</span>
+                        <input type="text" class="custom-filename" placeholder="Enter custom filename...">
+                    </label>
+                </div>
+                
+                <div class="filename-actions">
+                    <button class="neon-button cancel-btn">Cancel</button>
+                    <button class="neon-button confirm-btn">Use This Name</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Add event listeners
+        const cancelBtn = modal.querySelector('.cancel-btn');
+        const confirmBtn = modal.querySelector('.confirm-btn');
+        const customInput = modal.querySelector('.custom-filename');
+        const radioButtons = modal.querySelectorAll('input[name="filename"]');
+        
+        cancelBtn.onclick = () => {
+            document.body.removeChild(modal);
+            resolve(null);
+        };
+        
+        confirmBtn.onclick = () => {
+            const selected = modal.querySelector('input[name="filename"]:checked');
+            let filename = selected.value;
+            
+            if (filename === 'custom') {
+                filename = customInput.value.trim();
+                if (!filename) {
+                    alert('Please enter a custom filename');
+                    return;
+                }
+                // Add extension if missing
+                const extension = type === 'midi' ? '.mid' : '.json';
+                if (!filename.endsWith(extension)) {
+                    filename += extension;
+                }
+            }
+            
+            document.body.removeChild(modal);
+            resolve(filename);
+        };
+        
+        // Enable custom input when custom radio is selected
+        radioButtons.forEach(radio => {
+            radio.onchange = () => {
+                customInput.disabled = radio.value !== 'custom';
+                if (radio.value === 'custom') {
+                    customInput.focus();
+                }
+            };
+        });
+        
+        // Initialize custom input state
+        customInput.disabled = true;
+    });
+}
+
+// MIDI Generation with save dialog and library
 async function generateMIDI(prompt) {
     try {
         showLoadingScreen('Generating MIDI...');
@@ -629,10 +893,10 @@ async function generateMIDI(prompt) {
             updateLoadingProgress(100, 'MIDI generated successfully!');
             hideLoadingScreen();
 
-            // Create download link
-            createMIDIDownloadLink(result.data.filePath, prompt);
+            // Show save dialog and save to library
+            await saveGeneratedMIDI(result.data, prompt);
 
-            logToOLED(`✅ MIDI generated: ${result.data.filePath}`);
+            logToOLED(`✅ MIDI generated and ready to save`);
 
         } else {
             throw new Error(result.data?.error || result.error || 'MIDI generation failed');
@@ -701,35 +965,140 @@ function displayScanResults(results) {
 
 // MIDI Generation with download
 // Duplicate function removed - using the first generateMIDI function instead
-// Create download link for generated MIDI
-function createMIDIDownloadLink(filePath, prompt) {
+// Save generated MIDI with dialog and library integration
+async function saveGeneratedMIDI(generatedData, prompt) {
+    try {
+        const { filename, midiBuffer, category, metadata } = generatedData;
+        
+        // Show save dialog for user to choose name and location
+        const saveResult = await electronAPI.showSaveDialog({
+            title: 'Save Generated MIDI',
+            defaultPath: filename,
+            filters: [
+                { name: 'MIDI Files', extensions: ['mid', 'midi'] },
+                { name: 'All Files', extensions: ['*'] }
+            ]
+        });
+        
+        if (saveResult.canceled) {
+            logToOLED('💭 Save canceled by user');
+            return;
+        }
+        
+        // Extract user's chosen filename
+        const userFilename = saveResult.filePath.split('/').pop();
+        
+        // Save to user's chosen location
+        await electronAPI.writeFile(saveResult.filePath, midiBuffer);
+        
+        // Also save to library for future access
+        const libraryResult = await electronAPI.saveToLibrary({
+            fileName: userFilename,
+            content: midiBuffer,
+            category,
+            metadata: {
+                ...metadata,
+                prompt,
+                userSavePath: saveResult.filePath
+            },
+            type: 'midi'
+        });
+        
+        if (libraryResult.success) {
+            logToOLED(`💾 MIDI saved: ${userFilename}`);
+            logToOLED(`📚 Added to library (${category} category)`);
+            
+            // Create JSON metadata file in same location
+            const jsonFilename = userFilename.replace(/\.[^/.]+$/, '') + '.json';
+            const jsonPath = saveResult.filePath.replace(/\.[^/.]+$/, '') + '.json';
+            
+            const jsonData = {
+                ...metadata,
+                prompt,
+                filename: userFilename,
+                category,
+                createdAt: new Date().toISOString()
+            };
+            
+            await electronAPI.writeFile(jsonPath, JSON.stringify(jsonData, null, 2));
+            logToOLED(`📄 JSON metadata saved: ${jsonFilename}`);
+            
+            // Update library display
+            updateLibraryDisplay();
+            
+            // Show download area with library access
+            createLibraryAccessArea(libraryResult.metadata, saveResult.filePath);
+        } else {
+            logToOLED(`⚠️ File saved but library update failed: ${libraryResult.error}`);
+        }
+        
+    } catch (error) {
+        console.error('Save error:', error);
+        logToOLED(`❌ Save failed: ${error.message}`);
+    }
+}
+
+// Create library access area with category management
+function createLibraryAccessArea(metadata, savedPath) {
     const downloadArea = document.getElementById('download-area') || createDownloadArea();
     
-    const downloadLink = document.createElement('a');
-    downloadLink.href = `file://${filePath}`;
-    downloadLink.download = `generated_${Date.now()}.mid`;
-    downloadLink.className = 'neon-button download-button';
-    downloadLink.textContent = `📥 Download MIDI: ${prompt.substring(0, 30)}...`;
-    downloadLink.style.cssText = `
-        display: block;
-        margin: 10px 0;
-        padding: 10px;
-        text-decoration: none;
-        border: 2px solid #00ff00;
-        color: #00ff00;
-        background: transparent;
-        border-radius: 5px;
-        font-family: inherit;
-        cursor: pointer;
+    // Clear previous content
+    downloadArea.innerHTML = '<h3 class="panel-header">LIBRARY & DOWNLOADS</h3>';
+    
+    // Add file info
+    const fileInfo = document.createElement('div');
+    fileInfo.className = 'file-info';
+    fileInfo.innerHTML = `
+        <div class="generated-file-info">
+            <p>✅ <strong>${metadata.fileName}</strong></p>
+            <p>📁 Category: <span class="category-tag">${metadata.category}</span></p>
+            <p>📅 Created: ${new Date(metadata.createdAt).toLocaleString()}</p>
+        </div>
     `;
+    downloadArea.appendChild(fileInfo);
     
-    downloadLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        electronAPI.invoke('download-file', filePath);
-        logToOLED(`📥 Downloaded: ${downloadLink.download}`);
-    });
+    // Add action buttons
+    const actions = document.createElement('div');
+    actions.className = 'library-actions';
     
-    downloadArea.appendChild(downloadLink);
+    // Re-download button
+    const redownloadBtn = document.createElement('button');
+    redownloadBtn.className = 'neon-button';
+    redownloadBtn.textContent = '📥 Download Again';
+    redownloadBtn.onclick = () => {
+        electronAPI.downloadFile(savedPath);
+        logToOLED(`📥 Re-downloading: ${metadata.fileName}`);
+    };
+    
+    // Show in folder button
+    const showBtn = document.createElement('button');
+    showBtn.className = 'neon-button';
+    showBtn.textContent = '📂 Show in Folder';
+    showBtn.onclick = () => {
+        electronAPI.showInFolder(savedPath);
+    };
+    
+    // Browse library button
+    const browseBtn = document.createElement('button');
+    browseBtn.className = 'neon-button';
+    browseBtn.textContent = '📚 Browse Library';
+    browseBtn.onclick = () => {
+        showLibraryBrowser();
+    };
+    
+    actions.appendChild(redownloadBtn);
+    actions.appendChild(showBtn);
+    actions.appendChild(browseBtn);
+    downloadArea.appendChild(actions);
+    
+    // Style the area
+    downloadArea.style.cssText = `
+        margin-top: 20px;
+        padding: 15px;
+        border: 1px solid #00ff00;
+        border-radius: 5px;
+        background: rgba(0, 255, 0, 0.05);
+    `;
 }
 
 function createDownloadArea() {
@@ -749,6 +1118,274 @@ function createDownloadArea() {
     }
     
     return downloadArea;
+}
+
+// Library Browser with categories
+async function showLibraryBrowser() {
+    try {
+        // Remove any existing library modals first
+        const existingModals = document.querySelectorAll('.library-modal');
+        existingModals.forEach(modal => modal.remove());
+        
+        // Get library files and categories
+        const [filesResult, categoriesResult] = await Promise.all([
+            electronAPI.getLibraryFiles(),
+            electronAPI.getLibraryCategories()
+        ]);
+        
+        if (!filesResult.success) {
+            logToOLED('❌ Failed to load library');
+            return;
+        }
+        
+        // Create library browser modal
+        const modal = document.createElement('div');
+        modal.className = 'library-modal';
+        modal.innerHTML = `
+            <div class="library-modal-content">
+                <div class="library-header">
+                    <h2>🎵 Music Library</h2>
+                    <button class="close-modal" type="button">✕</button>
+                </div>
+                
+                <div class="library-categories">
+                    <button class="category-btn active" data-category="">All (${filesResult.files.length})</button>
+                    ${categoriesResult.success ? categoriesResult.categories.map(cat => 
+                        `<button class="category-btn" data-category="${cat.name}">${cat.name} (${cat.fileCount})</button>`
+                    ).join('') : ''}
+                </div>
+                
+                <div class="library-files" id="library-files-list">
+                    ${renderLibraryFiles(filesResult.files)}
+                </div>
+            </div>
+        `;
+        
+        // Add styles
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        `;
+        
+        // Add styles to modal content and close button
+        const modalContentEl = modal.querySelector('.library-modal-content');
+        if (modalContentEl) {
+            modalContentEl.style.cssText = `
+                background: white;
+                border-radius: 8px;
+                padding: 20px;
+                max-width: 90%;
+                max-height: 90%;
+                overflow-y: auto;
+                position: relative;
+            `;
+        }
+        
+        const closeBtnEl = modal.querySelector('.close-modal');
+        if (closeBtnEl) {
+            closeBtnEl.style.cssText = `
+                position: absolute;
+                top: 10px;
+                right: 15px;
+                background: none;
+                border: none;
+                font-size: 24px;
+                cursor: pointer;
+                color: #666;
+                z-index: 1001;
+                padding: 5px;
+                line-height: 1;
+            `;
+        }
+        
+        document.body.appendChild(modal);
+        
+        // Add close modal event listeners with improved debugging
+        const closeBtn = modal.querySelector('.close-modal');
+        
+        function closeModal() {
+            console.log('Closing library modal');
+            // Remove ESC key listener
+            document.removeEventListener('keydown', handleEscape);
+            // Remove modal from DOM
+            if (modal.parentNode) {
+                modal.remove();
+            }
+            logToOLED('📚 Library browser closed');
+        }
+        
+        if (closeBtn) {
+            console.log('Adding close button event listener');
+            closeBtn.addEventListener('click', (e) => {
+                console.log('Close button clicked');
+                e.preventDefault();
+                e.stopPropagation();
+                closeModal();
+            });
+        } else {
+            console.error('Close button not found!');
+        }
+        
+        // Close modal when clicking outside content
+        modal.addEventListener('click', (e) => {
+            console.log('Modal backdrop clicked, target:', e.target.className);
+            if (e.target === modal || e.target.classList.contains('library-modal')) {
+                console.log('Closing modal - clicked outside content');
+                closeModal();
+            }
+        });
+        
+        // Prevent modal content clicks from closing modal
+        const modalContent = modal.querySelector('.library-modal-content');
+        if (modalContent) {
+            modalContent.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+        }
+        
+        // Add ESC key listener to close modal
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                console.log('ESC key pressed - closing modal');
+                closeModal();
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+        
+        // Add event delegation for library file action buttons
+        modal.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent modal closing when clicking action buttons
+            
+            if (e.target.classList.contains('redownload-btn')) {
+                const filePath = e.target.dataset.filepath;
+                const fileName = e.target.dataset.filename;
+                redownloadFromLibrary(filePath, fileName);
+            } else if (e.target.classList.contains('show-folder-btn')) {
+                const filePath = e.target.dataset.filepath;
+                showFileInFolder(filePath);
+            } else if (e.target.classList.contains('play-preview-btn')) {
+                const filePath = e.target.dataset.filepath;
+                playPreview(filePath);
+            }
+        });
+        
+        // Add event listeners for category filtering
+        const categoryBtns = modal.querySelectorAll('.category-btn');
+        categoryBtns.forEach(btn => {
+            btn.addEventListener('click', async () => {
+                categoryBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const category = btn.dataset.category;
+                const filteredResult = category ? 
+                    await electronAPI.getLibraryFiles(category) : 
+                    await electronAPI.getLibraryFiles();
+                
+                if (filteredResult.success) {
+                    document.getElementById('library-files-list').innerHTML = 
+                        renderLibraryFiles(filteredResult.files);
+                }
+            });
+        });
+        
+        logToOLED(`📚 Library opened (${filesResult.files.length} files)`);
+        
+    } catch (error) {
+        console.error('Library browser error:', error);
+        logToOLED(`❌ Library error: ${error.message}`);
+    }
+}
+
+// Render library files list
+function renderLibraryFiles(files) {
+    if (files.length === 0) {
+        return '<div class="no-files">No files in this category</div>';
+    }
+    
+    return files.map(file => `
+        <div class="library-file-item">
+            <div class="file-info">
+                <div class="file-name">${file.fileName}</div>
+                <div class="file-meta">
+                    <span class="category-tag">${file.category}</span>
+                    <span class="date">${new Date(file.createdAt).toLocaleDateString()}</span>
+                </div>
+                ${file.prompt ? `<div class="file-prompt">"${file.prompt}"</div>` : ''}
+            </div>
+            <div class="file-actions">
+                <button class="mini-btn redownload-btn" data-filepath="${file.filePath}" data-filename="${file.fileName}">📥</button>
+                <button class="mini-btn show-folder-btn" data-filepath="${file.filePath}">📂</button>
+                <button class="mini-btn play-preview-btn" data-filepath="${file.filePath}">▶️</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Library action functions
+async function redownloadFromLibrary(filePath, fileName) {
+    try {
+        const result = await electronAPI.downloadFile(filePath);
+        if (result.success) {
+            logToOLED(`📥 Re-downloaded: ${fileName}`);
+        }
+    } catch (error) {
+        logToOLED(`❌ Download failed: ${error.message}`);
+    }
+}
+
+async function showFileInFolder(filePath) {
+    try {
+        await electronAPI.showInFolder(filePath);
+    } catch (error) {
+        logToOLED(`❌ Could not show file: ${error.message}`);
+    }
+}
+
+async function playPreview(filePath) {
+    // For now, just show a message - could integrate with a MIDI player later
+    logToOLED(`🎵 Preview: ${filePath.split('/').pop()}`);
+}
+
+// Library setup on first use
+async function setupLibrary() {
+    try {
+        const libraryResult = await electronAPI.getLibraryPath();
+        
+        if (!libraryResult.success || !libraryResult.path) {
+            // Prompt user to choose library location
+            const folderResult = await electronAPI.openFolderDialog();
+            
+            if (folderResult.canceled || !folderResult.filePaths[0]) {
+                logToOLED('📚 Library setup canceled');
+                return false;
+            }
+            
+            const libraryPath = folderResult.filePaths[0] + '/MusicLibrary';
+            const setupResult = await electronAPI.setLibraryPath(libraryPath);
+            
+            if (setupResult.success) {
+                logToOLED(`📚 Library created: ${libraryPath}`);
+                return true;
+            } else {
+                logToOLED(`❌ Library setup failed: ${setupResult.error}`);
+                return false;
+            }
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('Library setup error:', error);
+        logToOLED(`❌ Library setup error: ${error.message}`);
+        return false;
+    }
 }
 
 // Save and load app state
@@ -792,6 +1429,54 @@ async function loadAppState() {
             }
         } catch (error) {
             logToOLED(`⚠️ Database load failed: ${error.message}`);
+        }
+        
+        // Always check for processed data in database, even if no files loaded locally
+        try {
+            const status = await electronAPI.getSystemStatus();
+            if (status && status.database && status.database.total_files > 0) {
+                logToOLED('');
+                logToOLED('🤖 === MACHINE LEARNING DATA DETECTED ===');
+                logToOLED(`📊 Processed Files: <span style="color: #00ff00">${status.database.total_files}</span>`);
+                logToOLED(`🎵 Audio: <span style="color: #ff6600">${status.database.audio_files}</span> | 🎹 MIDI: <span style="color: #6600ff">${status.database.midi_files}</span>`);
+                
+                if (status.instruments && status.instruments.instruments) {
+                    logToOLED('');
+                    logToOLED('🎸 INSTRUMENT SAMPLES READY:');
+                    const instruments = status.instruments.instruments;
+                    Object.entries(instruments).forEach(([name, count]) => {
+                        if (count > 0) {
+                            logToOLED(`${getInstrumentEmoji(name)} ${name}: <span style="color: #ffff00">${count}</span> samples`);
+                        }
+                    });
+                }
+                
+                logToOLED(`📅 Data from: ${status.database.last_updated ? new Date(status.database.last_updated).toLocaleDateString() : 'Unknown'}`);
+                logToOLED('✅ Ready for music generation!');
+                
+                // Update ML status indicator
+                const mlStatusEl = document.getElementById('ml-data-status');
+                if (mlStatusEl) {
+                    mlStatusEl.textContent = 'RETAINED';
+                    mlStatusEl.style.color = '#00ff00';
+                }
+            } else {
+                // No processed data found
+                logToOLED('⚠️  No processed musical data found');
+                logToOLED('📁 Upload and process files to build library');
+                const mlStatusEl = document.getElementById('ml-data-status');
+                if (mlStatusEl) {
+                    mlStatusEl.textContent = 'NONE';
+                    mlStatusEl.style.color = '#ff6600';
+                }
+            }
+        } catch (error) {
+            console.error('Error checking processed data:', error);
+            const mlStatusEl = document.getElementById('ml-data-status');
+            if (mlStatusEl) {
+                mlStatusEl.textContent = 'ERROR';
+                mlStatusEl.style.color = '#ff0000';
+            }
         }
         
         // Fallback: Load from JSON file if database is empty
@@ -922,11 +1607,32 @@ function initializeUI() {
             console.log('Upload folder button clicked');
             try {
                 logToOLED('📁 Opening folder dialog...');
-                const folderPath = await electronAPI.openFolderDialog();
-                console.log('Folder selected:', folderPath);
-                if (folderPath && folderPath.length > 0) {
-                    logToOLED(`📁 Scanning folder: ${folderPath[0]}`);
-                    await scanFolder(folderPath[0]);
+                const folderPaths = await electronAPI.openFolderDialog();
+                console.log('Folder selected:', folderPaths);
+                
+                if (folderPaths && folderPaths.length > 0) {
+                    const selectedFolder = folderPaths[0];
+                    
+                    // Validate that the selected folder is not a system directory
+                    if (selectedFolder === '/' || selectedFolder.startsWith('/System') || 
+                        selectedFolder.startsWith('/Library') || selectedFolder.startsWith('/usr') ||
+                        selectedFolder.startsWith('/bin') || selectedFolder.startsWith('/sbin') ||
+                        selectedFolder.startsWith('/etc') || selectedFolder.startsWith('/var') ||
+                        selectedFolder.startsWith('/tmp') || selectedFolder.startsWith('/opt') ||
+                        selectedFolder.startsWith('/private') || selectedFolder.startsWith('/cores') ||
+                        selectedFolder.startsWith('/dev') || selectedFolder.startsWith('/home') ||
+                        selectedFolder.startsWith('/net') || selectedFolder.startsWith('/mnt') ||
+                        selectedFolder.startsWith('/proc') || selectedFolder.startsWith('/root') ||
+                        selectedFolder.startsWith('/run') || selectedFolder.startsWith('/srv') ||
+                        selectedFolder.startsWith('/sys')) {
+                        logToOLED('❌ Cannot scan system directories. Please select a user directory or music folder.');
+                        return;
+                    }
+                    
+                    logToOLED(`📁 Scanning folder: ${selectedFolder}`);
+                    await scanFolder(selectedFolder);
+                } else {
+                    logToOLED('❌ No folder selected');
                 }
             } catch (error) {
                 console.error('Folder upload error:', error);
@@ -1125,6 +1831,39 @@ function initializeUI() {
         });
     }
 
+    // Browse Library button
+    const browseLibraryBtn = document.getElementById('browse-library-btn');
+    console.log('Browse library button found:', browseLibraryBtn);
+    if (browseLibraryBtn) {
+        browseLibraryBtn.addEventListener('click', async () => {
+            console.log('Browse library button clicked');
+            try {
+                await showLibraryBrowser();
+            } catch (error) {
+                console.error('Browse library error:', error);
+                logToOLED('❌ Failed to open library browser');
+            }
+        });
+    }
+
+    // Setup Library button
+    const setupLibraryBtn = document.getElementById('setup-library-btn');
+    console.log('Setup library button found:', setupLibraryBtn);
+    if (setupLibraryBtn) {
+        setupLibraryBtn.addEventListener('click', async () => {
+            console.log('Setup library button clicked');
+            try {
+                const success = await setupLibrary();
+                if (success) {
+                    logToOLED('✅ Library setup completed!');
+                }
+            } catch (error) {
+                console.error('Setup library error:', error);
+                logToOLED('❌ Library setup failed');
+            }
+        });
+    }
+
     // Status query button
     const askStatusBtn = document.getElementById('ask-status-btn');
     console.log('Ask status button found:', askStatusBtn);
@@ -1179,15 +1918,11 @@ function initializeUI() {
         });
     }
 
-    // Generation buttons
+    // Generation buttons - Fixed duplicate event listeners
     const generateHumanizeBtn = document.querySelector('.generate-humanize');
     const generateMidiBtn = document.querySelector('.generate-midi');
     const generateBothBtn = document.querySelector('.generate-both');
 
-    if (generateHumanizeBtn) generateHumanizeBtn.addEventListener('click', () => handleGeneration('humanize'));
-    if (generateMidiBtn) generateMidiBtn.addEventListener('click', () => handleGeneration('midi'));
-    if (generateBothBtn) generateBothBtn.addEventListener('click', () => handleGeneration('both'));
-    
     console.log('Generation buttons found:', {
         humanize: generateHumanizeBtn,
         midi: generateMidiBtn,
@@ -1217,13 +1952,91 @@ function initializeUI() {
 
     const testUploadBtn = document.getElementById('test-upload-btn');
     if (testUploadBtn) {
-        testUploadBtn.addEventListener('click', () => ipcRenderer.invoke('open-test-window'));
+        testUploadBtn.addEventListener('click', () => electronAPI.invoke('open-test-window'));
     }
 
     const testSettingsBtn = document.getElementById('test-settings-btn');
     if (testSettingsBtn) {
-        testSettingsBtn.addEventListener('click', () => ipcRenderer.invoke('open-settings-test-window'));
+        testSettingsBtn.addEventListener('click', () => electronAPI.invoke('open-settings-test-window'));
     }
+    
+    // Add ML Data check button handler
+    const checkMLDataBtn = document.getElementById('check-ml-data');
+    if (checkMLDataBtn) {
+        checkMLDataBtn.addEventListener('click', async () => {
+            try {
+                logToOLED('🔍 Checking machine learning data...');
+                const result = await electronAPI.getMLDataSummary();
+                
+                if (result.success) {
+                    const summary = result.summary;
+                    logToOLED('');
+                    logToOLED('🎶 ================================');
+                    logToOLED('🤖 COMPLETE ML DATA ANALYSIS');
+                    logToOLED('🎶 ================================');
+                    logToOLED('');
+                    logToOLED(`📊 Data Retention: <span style="color: ${summary.dataRetention === 'YES' ? '#00ff00' : '#ff0000'}; font-weight: bold;">${summary.dataRetention}</span>`);
+                    logToOLED(`📁 Processed Files: <span style="color: #00ffff; font-weight: bold;">${summary.totalProcessedFiles}</span>`);
+                    logToOLED(`🎵 Audio Files: <span style="color: #ff6600">${summary.audioFiles}</span> | 🎹 MIDI Files: <span style="color: #6600ff">${summary.midiFiles}</span>`);
+                    logToOLED(`🎸 Total Instrument Samples: <span style="color: #ffff00; font-weight: bold;">${summary.totalInstrumentData}</span>`);
+                    logToOLED(`✅ Processing Status: <span style="color: ${summary.processingComplete ? '#00ff00' : '#ff6600'}">${summary.processingComplete ? 'COMPLETE' : 'PARTIAL'}</span>`);
+                    
+                    if (summary.lastUpdated) {
+                        logToOLED(`📅 Last Training: <span style="color: #cccccc">${new Date(summary.lastUpdated).toLocaleString()}</span>`);
+                    }
+                    
+                    if (summary.instruments && Object.keys(summary.instruments).length > 0) {
+                        logToOLED('');
+                        logToOLED('🎸 DETAILED INSTRUMENT BREAKDOWN:');
+                        logToOLED('─────────────────────────────────────');
+                        
+                        // Sort instruments by count (highest first)
+                        const sortedInstruments = Object.entries(summary.instruments)
+                            .sort(([,a], [,b]) => b - a)
+                            .filter(([,count]) => count > 0);
+                            
+                        sortedInstruments.forEach(([name, count]) => {
+                            const emoji = getInstrumentEmoji(name);
+                            const percentage = ((count / summary.totalInstrumentData) * 100).toFixed(1);
+                            logToOLED(`${emoji} ${name}: <span style="color: #ffff00">${count}</span> samples (<span style="color: #888888">${percentage}%</span>)`);
+                        });
+                        
+                        logToOLED('');
+                        logToOLED('🚀 YOUR MUSIC ARSENAL IS LOADED & READY!');
+                        logToOLED('💡 Use these samples to generate new music');
+                    }
+                    
+                    // Update status indicator
+                    const mlStatusEl = document.getElementById('ml-data-status');
+                    if (mlStatusEl) {
+                        mlStatusEl.textContent = summary.dataRetention === 'YES' ? 'RETAINED' : 'MISSING';
+                        mlStatusEl.style.color = summary.dataRetention === 'YES' ? '#00ff00' : '#ff0000';
+                    }
+                } else {
+                    logToOLED(`❌ Error checking ML data: ${result.error}`);
+                    const mlStatusEl = document.getElementById('ml-data-status');
+                    if (mlStatusEl) {
+                        mlStatusEl.textContent = 'ERROR';
+                        mlStatusEl.style.color = '#ff0000';
+                    }
+                }
+            } catch (error) {
+                logToOLED(`❌ Failed to check ML data: ${error.message}`);
+            }
+        });
+    }
+}
+
+function getInstrumentEmoji(instrumentName) {
+    const name = instrumentName.toLowerCase();
+    if (name.includes('guitar')) return '🎸';
+    if (name.includes('piano')) return '🎹';
+    if (name.includes('drum')) return '🥁';
+    if (name.includes('bass')) return '🎸';
+    if (name.includes('vocal')) return '🎤';
+    if (name.includes('synth')) return '🎛️';
+    if (name.includes('string')) return '🎻';
+    return '🎵';
 }
 
 function updateLibraryDisplay() {
@@ -1233,7 +2046,7 @@ function updateLibraryDisplay() {
         const midiCount = loadedFiles.filter(f => f.type === 'midi').length;
         
         logToOLED('');
-        logToOLED('📊 === LIBRARY STATUS ===');
+        logToOLED('📊 === CURRENT SESSION ===');
         logToOLED(`🎵 Audio Files: <span style="color: #ff6600">${audioCount}</span>`);
         logToOLED(`🎹 MIDI Files: <span style="color: #6600ff">${midiCount}</span>`);
         logToOLED(`📁 Total Files: <span style="color: #00ffff">${loadedFiles.length}</span>`);
@@ -1282,19 +2095,25 @@ async function handleGeneration(type) {
         
         switch (type) {
             case 'humanize':
-                const jsonResult = await generateHumanizedJSON(fullPrompt);
-                showSuccess(`Generated JSON: ${jsonResult.filename}`);
+                const jsonResult = await generateHumanizedJSONWithSaveDialog(fullPrompt);
+                if (jsonResult) {
+                    showSuccess(`Generated JSON: ${jsonResult.filename}`);
+                }
                 break;
             case 'midi':
-                const midiResult = await generateMIDI(fullPrompt);
-                showSuccess(`Generated MIDI: ${midiResult.filename}`);
+                const midiResult = await generateMIDIWithSaveDialog(fullPrompt);
+                if (midiResult) {
+                    const midiFilename = midiResult?.filename || 'Generated MIDI';
+                    showSuccess(`Generated MIDI: ${midiFilename}`);
+                }
                 break;
             case 'both':
-                const jsonBoth = await generateHumanizedJSON(fullPrompt);
-                const midiBoth = await generateMIDI(fullPrompt);
-                showSuccess(`Generated both files:`);
-                showInfo(`  💾 JSON: ${jsonBoth.filename}`);
-                showInfo(`  🎵 MIDI: ${midiBoth.filename}`);
+                const combinedResult = await generateCombinedMusicFiles(fullPrompt);
+                if (combinedResult) {
+                    showSuccess(`Generated combined music files:`);
+                    showInfo(`  💾 JSON: ${combinedResult.jsonFilename}`);
+                    showInfo(`  🎵 MIDI: ${combinedResult.midiFilename}`);
+                }
                 break;
         }
         
@@ -1313,7 +2132,7 @@ async function generateHumanizedJSON(prompt) {
     logToOLED('🤖 Generating humanized JSON from analyzed patterns...');
     
     // Gather patterns from analyzed files
-    const analysisPatterns = extractPatternsFromAnalyzedFiles();
+    const analysisPatterns = extractAnalysisPatterns();
     logToOLED(`📊 Using patterns from ${loadedFiles.length} analyzed files`);
     
     // Enhanced context with analysis data
@@ -1340,9 +2159,28 @@ async function generateHumanizedJSON(prompt) {
     const response = await llmOrchestrator.runPrompt(fullPrompt);
     
     if (response && response.success) {
-        // Save the JSON file
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const filename = `humanized-${timestamp}.json`;
+        // Generate smart filename
+        const smartFilename = generateSmartFilename(prompt, 'json', { 
+            template: appSettings.autoNaming?.template || 'descriptive' 
+        });
+        
+        // Show filename suggestions if enabled
+        let filename = smartFilename;
+        if (appSettings.autoNaming?.showSuggestions) {
+            const suggestions = getFilenameSuggestions(prompt, 'json', 3);
+            if (suggestions.length > 0) {
+                const selectedFilename = await showFilenameDialog(prompt, 'json', suggestions);
+                if (selectedFilename) {
+                    filename = selectedFilename;
+                } else {
+                    // User cancelled
+                    hideLoadingScreen();
+                    return null;
+                }
+            }
+        }
+        
+        logToOLED(`🏷️ Using filename: ${filename}`);
         const userDataPath = await electronAPI.getUserDataPath();
         const outputDir = `${userDataPath}/AI-Music-Assistant/Generated`;
         const outputPath = `${outputDir}/${filename}`;
@@ -1402,37 +2240,382 @@ async function generateMIDI(prompt) {
         analysisPatterns: analysisPatterns
     });
     
-    if (result && result.success) {
-        logToOLED(`💾 MIDI file saved: ${result.filename}`);
+    if (result && result.success && result.data) {
+        const generatedData = result.data;
+        const filename = generatedData.filename || 'Generated MIDI';
         
-        // Verify file exists
-        if (result.path) {
-            const fileExists = await electronAPI.checkFileExists(result.path);
-            if (fileExists) {
-                logToOLED(`✅ MIDI file verified: ${result.filename}`);
-            } else {
-                logToOLED(`❌ MIDI file not found: ${result.filename}`);
-                throw new Error('MIDI file was not created successfully');
+        logToOLED(`💾 MIDI generated: ${filename}`);
+        
+        // If there's a midiBuffer, we can save it to a file
+        if (generatedData.midiBuffer) {
+            try {
+                // Create the generated files directory
+                const userDataPath = await electronAPI.getUserDataPath();
+                const outputDir = `${userDataPath}/AI-Music-Assistant/Generated`;
+                await electronAPI.createDirectory(outputDir);
+                
+                const outputPath = `${outputDir}/${filename}`;
+                
+                // Save the MIDI buffer to file
+                await electronAPI.writeFile(outputPath, generatedData.midiBuffer);
+                
+                // Verify file exists
+                const fileExists = await electronAPI.checkFileExists(outputPath);
+                if (fileExists) {
+                    logToOLED(`✅ MIDI file verified: ${filename}`);
+                } else {
+                    logToOLED(`❌ MIDI file not found: ${filename}`);
+                    throw new Error('MIDI file was not created successfully');
+                }
+                
+                // Create download button
+                createDownloadButton(filename, outputPath, 'MIDI');
+                
+                // Automatically download the file
+                try {
+                    logToOLED(`📥 Auto-downloading MIDI file: ${filename}`);
+                    const downloadResult = await electronAPI.downloadFile(outputPath);
+                    if (downloadResult.success) {
+                        logToOLED(`✅ MIDI file auto-downloaded: ${downloadResult.message}`);
+                    } else {
+                        logToOLED(`⚠️ Auto-download failed: ${downloadResult.error}`);
+                    }
+                } catch (error) {
+                    logToOLED(`❌ Auto-download error: ${error.message}`);
+                }
+                
+                // Return result with path information
+                return {
+                    ...result,
+                    data: {
+                        ...generatedData,
+                        path: outputPath
+                    }
+                };
+                
+            } catch (error) {
+                logToOLED(`❌ Failed to save MIDI file: ${error.message}`);
+                throw error;
             }
+        } else {
+            logToOLED(`⚠️ No MIDI buffer provided in result`);
+            return result;
+        }
+    } else {
+        throw new Error(result?.error || 'Failed to generate MIDI');
+    }
+}
+
+// Generate humanized JSON with save dialog and library integration
+async function generateHumanizedJSONWithSaveDialog(prompt) {
+    try {
+        logToOLED('🤖 Generating humanized JSON from analyzed patterns...');
+        
+        // Gather patterns from analyzed files
+        const analysisPatterns = extractPatternsFromAnalyzedFiles();
+        logToOLED(`📊 Using patterns from ${loadedFiles.length} analyzed files`);
+        
+        // Enhanced context with analysis data
+        const enhancedContext = {
+            type: 'music_generation',
+            prompt: prompt,
+            analyzedPatterns: analysisPatterns,
+            fileCount: loadedFiles.length
+        };
+        
+        // Use LLM to generate structured music data with project context
+        const fullPrompt = `Generate a detailed JSON structure for the musical prompt: "${prompt}". 
+            Use the following analyzed patterns from ${loadedFiles.length} audio/MIDI files:
+            - Keys found: ${Array.from(analysisPatterns.keys).join(', ')}
+            - Chords: ${Array.from(analysisPatterns.chords).join(', ')}
+            - Genres: ${Array.from(analysisPatterns.genres).join(', ')}
+            - Moods: ${Array.from(analysisPatterns.moods).join(', ')}
+            - Instruments: ${Array.from(analysisPatterns.instruments).join(', ')}
+            - Tempo range: ${analysisPatterns.tempoRange.min}-${analysisPatterns.tempoRange.max} BPM
+            
+            Include humanization parameters derived from audio analysis like timing variations, 
+            velocity curves, and micro-timing patterns. Make it realistic and musically coherent.`;
+        
+        const response = await llmOrchestrator.runPrompt(fullPrompt);
+        
+        if (response && response.success) {
+            // Generate smart filename
+            const smartFilename = generateSmartFilename(prompt, 'json', { 
+                template: appSettings.autoNaming?.template || 'descriptive' 
+            });
+            
+            // Show save dialog for user to choose location and filename
+            const saveResult = await electronAPI.showSaveDialog({
+                title: 'Save Humanized JSON',
+                defaultPath: smartFilename,
+                filters: [
+                    { name: 'JSON Files', extensions: ['json'] },
+                    { name: 'All Files', extensions: ['*'] }
+                ]
+            });
+            
+            if (saveResult.canceled) {
+                logToOLED('💭 Save canceled by user');
+                return null;
+            }
+            
+            const userFilename = saveResult.filePath.split('/').pop();
+            const outputPath = saveResult.filePath;
+            
+            logToOLED(`💾 Writing JSON file: ${userFilename}`);
+            await electronAPI.writeFile(outputPath, JSON.stringify(response.data, null, 2));
+            
+            // Verify file was created
+            const fileExists = await electronAPI.checkFileExists(outputPath);
+            if (!fileExists) {
+                throw new Error('File was not created successfully');
+            }
+            
+            logToOLED(`✅ JSON file saved: ${userFilename}`);
+            
+            // Save to library for future access
+            const libraryResult = await electronAPI.saveToLibrary({
+                fileName: userFilename,
+                content: JSON.stringify(response.data, null, 2),
+                category: 'humanization',
+                metadata: {
+                    prompt,
+                    userSavePath: outputPath,
+                    generatedAt: new Date().toISOString(),
+                    analysisPatterns: analysisPatterns
+                },
+                type: 'json'
+            });
+            
+            if (libraryResult.success) {
+                logToOLED(`📚 Added to library (humanization category)`);
+                updateLibraryDisplay();
+            }
+            
+            return { data: response.data, filename: userFilename, path: outputPath };
+        } else {
+            throw new Error('Failed to generate humanized JSON');
+        }
+    } catch (error) {
+        logToOLED(`❌ JSON generation failed: ${error.message}`);
+        throw error;
+    }
+}
+
+// Generate MIDI with save dialog and library integration
+async function generateMIDIWithSaveDialog(prompt) {
+    try {
+        logToOLED('🎹 Generating MIDI from analyzed patterns...');
+        
+        // Gather patterns from analyzed files
+        const analysisPatterns = extractPatternsFromAnalyzedFiles();
+        logToOLED(`🎵 Using MIDI patterns from ${analysisPatterns.midiFiles} MIDI files`);
+        
+        // Enhanced prompt with analysis data
+        const enhancedPrompt = `${prompt} - Use these patterns: Key signatures: ${Array.from(analysisPatterns.keys).join(', ')}, Chord progressions: ${Array.from(analysisPatterns.chords).join(', ')}, Tempo range: ${analysisPatterns.tempoRange.min}-${analysisPatterns.tempoRange.max} BPM`;
+        
+        const result = await electronAPI.generateMidi(enhancedPrompt, {
+            ...appSettings,
+            analysisPatterns: analysisPatterns
+        });
+        
+        if (result && result.success && result.data) {
+            const generatedData = result.data;
+            const defaultFilename = generatedData.filename || 'Generated MIDI.mid';
+            
+            // Show save dialog for user to choose location and filename
+            const saveResult = await electronAPI.showSaveDialog({
+                title: 'Save Generated MIDI',
+                defaultPath: defaultFilename,
+                filters: [
+                    { name: 'MIDI Files', extensions: ['mid', 'midi'] },
+                    { name: 'All Files', extensions: ['*'] }
+                ]
+            });
+            
+            if (saveResult.canceled) {
+                logToOLED('💭 Save canceled by user');
+                return null;
+            }
+            
+            const userFilename = saveResult.filePath.split('/').pop();
+            const outputPath = saveResult.filePath;
+            
+            // Save the MIDI buffer to user's chosen location
+            if (generatedData.midiBuffer) {
+                await electronAPI.writeFile(outputPath, generatedData.midiBuffer);
+                
+                // Verify file exists
+                const fileExists = await electronAPI.checkFileExists(outputPath);
+                if (!fileExists) {
+                    throw new Error('MIDI file was not created successfully');
+                }
+                
+                logToOLED(`✅ MIDI file saved: ${userFilename}`);
+                
+                // Save to library for future access
+                const category = generatedData.category || 'midi';
+                const libraryResult = await electronAPI.saveToLibrary({
+                    fileName: userFilename,
+                    content: generatedData.midiBuffer,
+                    category: category,
+                    metadata: {
+                        ...generatedData.metadata,
+                        prompt,
+                        userSavePath: outputPath
+                    },
+                    type: 'midi'
+                });
+                
+                if (libraryResult.success) {
+                    logToOLED(`📚 Added to library (${category} category)`);
+                    updateLibraryDisplay();
+                }
+                
+                return { filename: userFilename, path: outputPath, data: generatedData };
+            } else {
+                throw new Error('No MIDI buffer provided in result');
+            }
+        } else {
+            throw new Error(result?.error || 'Failed to generate MIDI');
+        }
+    } catch (error) {
+        logToOLED(`❌ MIDI generation failed: ${error.message}`);
+        throw error;
+    }
+}
+
+// Generate combined JSON humanization + MIDI files
+async function generateCombinedMusicFiles(prompt) {
+    try {
+        logToOLED('🎼 Generating combined music files (JSON + MIDI)...');
+        
+    // Extract analysisPatterns once and pass to both generators
+    const analysisPatterns = extractAnalysisPatterns();
+    const jsonResult = await generateHumanizedJSONInternal(prompt, analysisPatterns);
+    const midiResult = await generateMIDIInternal(prompt, analysisPatterns);
+        
+        if (!jsonResult || !midiResult) {
+            throw new Error('Failed to generate one or both files');
         }
         
-        // Create download button
-        createDownloadButton(result.filename, result.path, 'MIDI');
+        // Show save dialog for the base filename (will save both files with different extensions)
+        const saveResult = await electronAPI.showSaveDialog({
+            title: 'Save Combined Music Files',
+            defaultPath: `${generateSmartFilename(prompt, 'music', { template: 'descriptive' })}`,
+            filters: [
+                { name: 'Music Project', extensions: ['*'] }
+            ]
+        });
         
-        // Automatically download the file
-        try {
-            logToOLED(`📥 Auto-downloading MIDI file: ${result.filename}`);
-            const downloadResult = await electronAPI.downloadFile(result.path);
-            if (downloadResult.success) {
-                logToOLED(`✅ MIDI file auto-downloaded: ${downloadResult.message}`);
-            } else {
-                logToOLED(`⚠️ Auto-download failed: ${downloadResult.error}`);
-            }
-        } catch (error) {
-            logToOLED(`❌ Auto-download error: ${error.message}`);
+        if (saveResult.canceled) {
+            logToOLED('💭 Save canceled by user');
+            return null;
         }
         
-        return result;
+        const basePath = saveResult.filePath.replace(/\.[^/.]+$/, ''); // Remove extension if any
+        const jsonPath = `${basePath}.json`;
+        const midiPath = `${basePath}.mid`;
+        const jsonFilename = jsonPath.split('/').pop();
+        const midiFilename = midiPath.split('/').pop();
+        
+        // Save both files
+        await electronAPI.writeFile(jsonPath, JSON.stringify(jsonResult.data, null, 2));
+        await electronAPI.writeFile(midiPath, midiResult.midiBuffer);
+        
+        // Verify both files were created
+        const jsonExists = await electronAPI.checkFileExists(jsonPath);
+        const midiExists = await electronAPI.checkFileExists(midiPath);
+        
+        if (!jsonExists || !midiExists) {
+            throw new Error('One or both files were not created successfully');
+        }
+        
+        logToOLED(`✅ Combined files saved: ${jsonFilename} & ${midiFilename}`);
+        
+        // Save both to library
+        const category = midiResult.category || 'combined';
+        
+        await electronAPI.saveToLibrary({
+            fileName: jsonFilename,
+            content: JSON.stringify(jsonResult.data, null, 2),
+            category: category,
+            metadata: {
+                prompt,
+                userSavePath: jsonPath,
+                generatedAt: new Date().toISOString(),
+                relatedMidiFile: midiFilename
+            },
+            type: 'json'
+        });
+        
+        await electronAPI.saveToLibrary({
+            fileName: midiFilename,
+            content: midiResult.midiBuffer,
+            category: category,
+            metadata: {
+                ...midiResult.metadata,
+                prompt,
+                userSavePath: midiPath,
+                relatedJsonFile: jsonFilename
+            },
+            type: 'midi'
+        });
+        
+        logToOLED(`📚 Both files added to library (${category} category)`);
+        updateLibraryDisplay();
+        
+        return { 
+            jsonFilename, 
+            midiFilename, 
+            jsonPath, 
+            midiPath,
+            jsonData: jsonResult.data,
+            midiData: midiResult
+        };
+    } catch (error) {
+        logToOLED(`❌ Combined generation failed: ${error.message}`);
+        throw error;
+    }
+}
+
+// Internal JSON generation (no save dialog, returns data only)
+async function generateHumanizedJSONInternal(prompt, analysisPatterns) {
+    if (!analysisPatterns) analysisPatterns = extractPatternsFromAnalyzedFiles();
+    
+    const fullPrompt = `Generate a detailed JSON structure for the musical prompt: "${prompt}". 
+        Use the following analyzed patterns from ${loadedFiles.length} audio/MIDI files:
+        - Keys found: ${Array.from(analysisPatterns.keys).join(', ')}
+        - Chords: ${Array.from(analysisPatterns.chords).join(', ')}
+        - Genres: ${Array.from(analysisPatterns.genres).join(', ')}
+        - Moods: ${Array.from(analysisPatterns.moods).join(', ')}
+        - Instruments: ${Array.from(analysisPatterns.instruments).join(', ')}
+        - Tempo range: ${analysisPatterns.tempoRange.min}-${analysisPatterns.tempoRange.max} BPM
+        
+        Include humanization parameters derived from audio analysis like timing variations, 
+        velocity curves, and micro-timing patterns. Make it realistic and musically coherent.`;
+    
+    const response = await llmOrchestrator.runPrompt(fullPrompt);
+    
+    if (response && response.success) {
+        return { data: response.data };
+    } else {
+        throw new Error('Failed to generate humanized JSON');
+    }
+}
+
+// Internal MIDI generation (no save dialog, returns data only)
+async function generateMIDIInternal(prompt, analysisPatterns = extractPatternsFromAnalyzedFiles()) {
+    if (!analysisPatterns) analysisPatterns = extractAnalysisPatterns();
+    const enhancedPrompt = `${prompt} - Use these patterns: Key signatures: ${Array.from(analysisPatterns.keys).join(', ')}, Chord progressions: ${Array.from(analysisPatterns.chords).join(', ')}, Tempo range: ${analysisPatterns.tempoRange.min}-${analysisPatterns.tempoRange.max} BPM`;
+    
+    const result = await electronAPI.generateMidi(enhancedPrompt, {
+        ...appSettings,
+        analysisPatterns: analysisPatterns
+    });
+    
+    if (result && result.success && result.data) {
+        return result.data;
     } else {
         throw new Error(result?.error || 'Failed to generate MIDI');
     }
@@ -1476,6 +2659,12 @@ async function scanFolder(folderPath) {
 
         // Scan all found files
         await scanFiles(audioMidiFiles);
+        
+        // Force refresh OLED display after scan completion
+        setTimeout(async () => {
+            await updateOLEDDisplay();
+            logToOLED('📊 Library status updated');
+        }, 2000);
 
     } catch (error) {
         console.error('Folder scanning error:', error);
@@ -1493,6 +2682,21 @@ async function getAllFilesInFolder(folderPath) {
         // Check for cancellation
         if (shouldStopScanning) {
             throw new Error('Folder scanning cancelled by user');
+        }
+
+        // Prevent scanning system directories
+        if (folderPath === '/' || folderPath === '\\' || 
+            folderPath.startsWith('/System') || folderPath.startsWith('/Library') ||
+            folderPath.startsWith('/usr') || folderPath.startsWith('/bin') ||
+            folderPath.startsWith('/sbin') || folderPath.startsWith('/etc') ||
+            folderPath.startsWith('/var') || folderPath.startsWith('/tmp') ||
+            folderPath.startsWith('/opt') || folderPath.startsWith('/private') ||
+            folderPath.startsWith('/cores') || folderPath.startsWith('/dev') ||
+            folderPath.startsWith('/home') || folderPath.startsWith('/net') ||
+            folderPath.startsWith('/mnt') || folderPath.startsWith('/proc') ||
+            folderPath.startsWith('/root') || folderPath.startsWith('/run') ||
+            folderPath.startsWith('/srv') || folderPath.startsWith('/sys')) {
+            throw new Error('Cannot scan system directories. Please select a user directory or music folder.');
         }
 
         // Add timeout to prevent hanging on folder scanning
@@ -1610,7 +2814,7 @@ function extractPatternsFromAnalyzedFiles() {
             if (analysis.key) patterns.keys.add(analysis.key);
             if (analysis.genre) patterns.genres.add(analysis.genre);
             if (analysis.mood) patterns.moods.add(analysis.mood);
-            if (analysis.tempo) patterns.tempos.push(analysis.tempo);
+            if (analysis.tempo && typeof analysis.tempo === 'number') patterns.tempos.push(analysis.tempo);
             
             // Handle chords (array or single)
             if (analysis.chords) {
@@ -1927,11 +3131,22 @@ async function debugDownloadFunctionality() {
 // Status System Functions
 async function updateOLEDDisplay() {
     try {
+        console.log('🔄 Updating OLED display...');
         const status = await electronAPI.getSystemStatus();
+        
         if (status.error) {
             console.error('Error getting system status:', status.error);
+            logToOLED(`❌ Database error: ${status.error}`);
             return;
         }
+        
+        // Check if database is connected
+        if (!status.database || !status.database.connected) {
+            console.warn('Database not connected, using fallback values');
+            logToOLED('⚠️ Database not connected, showing cached data');
+        }
+
+        console.log('📊 Raw status data:', JSON.stringify(status, null, 2));
 
         // Update OLED display with real data
         const chordCountEl = document.getElementById('chord-count');
@@ -1948,6 +3163,12 @@ async function updateOLEDDisplay() {
         const drumCount = status.instruments?.drums || 0;
         const bassCount = status.instruments?.bass || 0;
         const totalFiles = status.database?.total_files || 0;
+        
+        // Calculate total samples from instruments
+        let totalSamples = 0;
+        if (status.instruments && status.instruments.instruments) {
+            totalSamples = Object.values(status.instruments.instruments).reduce((sum, count) => sum + count, 0);
+        }
 
         if (chordCountEl) chordCountEl.textContent = chordCount;
         if (guitarCountEl) guitarCountEl.textContent = guitarCount;
@@ -1955,6 +3176,15 @@ async function updateOLEDDisplay() {
         if (drumCountEl) drumCountEl.textContent = drumCount;
         if (bassCountEl) bassCountEl.textContent = bassCount;
         if (totalFilesEl) totalFilesEl.textContent = totalFiles;
+        
+        // Update additional status indicators
+        const processedFilesEl = document.getElementById('processed-files');
+        const totalSamplesEl = document.getElementById('total-samples');
+        const filesStatusEl = document.getElementById('files-status');
+        
+        if (processedFilesEl) processedFilesEl.textContent = totalFiles;
+        if (totalSamplesEl) totalSamplesEl.textContent = totalSamples;
+        if (filesStatusEl) filesStatusEl.textContent = loadedFiles.length;
 
         // Add update animation
         const oledDisplay = document.getElementById('oled-display');
@@ -1963,7 +3193,7 @@ async function updateOLEDDisplay() {
             setTimeout(() => oledDisplay.classList.remove('updating'), 500);
         }
 
-        // Log the real status to console for debugging
+        // Log comprehensive status to console for debugging
         console.log('📊 === OLED DISPLAY UPDATED ===');
         console.log(`🎵 Audio Files: ${status.database?.audio_files || 0}`);
         console.log(`🎹 MIDI Files: ${status.database?.midi_files || 0}`);
@@ -1973,9 +3203,20 @@ async function updateOLEDDisplay() {
         console.log(`🥁 Drum Sounds: ${drumCount}`);
         console.log(`🎸 Bass Sounds: ${bassCount}`);
         console.log(`🎶 Chord Patterns: ${chordCount}`);
+        
+        // Show instrument breakdown if available
+        if (status.instruments && status.instruments.instruments) {
+            console.log('🎸 === INSTRUMENT BREAKDOWN ===');
+            Object.entries(status.instruments.instruments).forEach(([name, count]) => {
+                if (count > 0) {
+                    console.log(`${getInstrumentEmoji(name)} ${name}: ${count}`);
+                }
+            });
+        }
 
     } catch (error) {
         console.error('Error updating OLED display:', error);
+        logToOLED(`❌ OLED display error: ${error.message}`);
     }
 }
 
@@ -1991,18 +3232,20 @@ async function askStatusQuestion(question) {
     try {
         const result = await electronAPI.askStatusQuestion(question);
         
-        if (result.error) {
-            logToOLED(`❌ Status query error: ${result.error}`);
-        } else {
+        if (typeof result === 'string') {
             // Display the answer on the main OLED display
             logToOLED('📊 === STATUS RESPONSE ===');
-            const lines = result.answer.split('\n');
+            const lines = result.split('\n');
             for (const line of lines) {
                 if (line.trim()) {
                     logToOLED(line.trim());
                 }
             }
             logToOLED('========================');
+        } else if (result.error) {
+            logToOLED(`❌ Status query error: ${result.error}`);
+        } else {
+            logToOLED(`❌ Unexpected response format: ${typeof result}`);
         }
     } catch (error) {
         logToOLED(`❌ Status query error: ${error.message}`);
