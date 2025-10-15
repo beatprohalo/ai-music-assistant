@@ -3,8 +3,9 @@ const { Midi } = require('@tonejs/midi'); // For MIDI object manipulation
 const fs = require('fs/promises'); // To save the file
 const path = require('path');
 
-async function generateMidiFromLLMResponse(llmSuggestion, outputPath) {
+async function generateMidiFromLLMResponse(llmSuggestion, outputPath, analysisPatterns) {
     console.log(`MIDI Generator: Received LLM suggestion for generation: "${llmSuggestion}"`);
+    console.log('MIDI Generator: Received analysis patterns:', analysisPatterns);
     // This is a highly simplified placeholder.
     // In reality, this would involve parsing LLM text for instructions
     // and using musical theory or ML models to create notes.

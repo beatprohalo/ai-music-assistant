@@ -22,17 +22,17 @@ async function generateLlmResponse(prompt, queryVector = null, queryType = null)
     let context = "";
     let relevantSourceFiles = [];
 
+    let patterns = [];
     if (queryVector && queryType) {
-        let queryResults = [];
         if (queryType === 'humanization') {
-            queryResults = await vectorDatabase.queryHumanizationFeatures(queryVector, 3); // Get top 3
+            patterns = await vectorDatabase.queryHumanizationFeatures(queryVector, 3); // Get top 3
         } else if (queryType === 'pattern') {
-            queryResults = await vectorDatabase.queryPatternFeatures(queryVector, 3); // Get top 3
+            patterns = await vectorDatabase.queryPatternFeatures(queryVector, 3); // Get top 3
         }
 
-        if (queryResults.length > 0) {
+        if (patterns.length > 0) {
             context += "\n\n--- Relevant Musical Context from Library ---\n";
-            queryResults.forEach((res, index) => {
+            patterns.forEach((res, index) => {
                 context += `\nMatch ${index + 1} (Similarity Score: ${res._distance ? res._distance.toFixed(3) : 'N/A'}):\n`;
                 context += `  Source File: ${path.basename(res.sourceFile)}\n`;
                 context += `  Type: ${res.type}, Tags: ${res.tags.join(', ')}\n`;
@@ -69,7 +69,7 @@ async function generateLlmResponse(prompt, queryVector = null, queryType = null)
     }
 
     await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 1000));
-    return { response, sourceFiles: relevantSourceFiles }; // Return source files as well
+    return { response, sourceFiles: relevantSourceFiles, patterns }; // Return source files and patterns
 }
 
 module.exports = {
